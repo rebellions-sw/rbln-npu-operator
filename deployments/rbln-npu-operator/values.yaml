@@ -1,0 +1,129 @@
+# Default values for rbln-npu-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# The base name used for rbln components.
+name: rbln
+
+# Node Feature Discovery dependency
+nfd:
+  enabled: false
+
+# Operator configuration
+operator:
+  # Operator image configuration
+  image:
+    repository: rebellions/rbln-npu-operator
+    tag: latest
+    pullPolicy: IfNotPresent
+  # Resource configuration
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8443
+    targetPort: 8443
+  # Pod security context
+  securityContext:
+    runAsNonRoot: true
+
+  # Affinity configuration
+  # Override these values to control where the operator runs
+  # Default: no affinity (can run on any node)
+  #
+  # Example for control plane nodes:
+  # affinity:
+  #   nodeAffinity:
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #     - weight: 1
+  #       preference:
+  #         matchExpressions:
+  #         - key: "node-role.kubernetes.io/control-plane"
+  #           operator: Exists
+  affinity: {}
+
+  # Tolerations configuration
+  # Override these values to allow running on tainted nodes
+  # Default: no tolerations (only run on untainted nodes)
+  #
+  # Example for control plane nodes:
+  # tolerations:
+  # - key: "node-role.kubernetes.io/control-plane"
+  #   operator: Exists
+  #   effect: NoSchedule
+  # - key: "node-role.kubernetes.io/master"
+  #   operator: Exists
+  #   effect: NoSchedule
+  tolerations: []
+
+
+# NPU Device Plugin configuration
+devicePlugin:
+  enabled: true
+  image:
+    repository: rebellions/k8s-device-plugin
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resourceList:
+  - productCardNames:
+    - RBLN-CA12
+    - RBLN-CA22
+    - RBLN-CA25
+    resourceName: ATOM
+    resourcePrefix: rebellions.ai
+
+# NPU Metrics Exporter configuration
+metricsExporter:
+  enabled: true
+  image:
+    repository: rebellions/rbln-metrics-exporter
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# NPU Feature Discovery configuration
+npuFeatureDiscovery:
+  enabled: true
+  image:
+    repository: rebellions/rbln-npu-feature-discovery
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Sandbox Device Plugin for VM workloads
+sandboxDevicePlugin:
+  enabled: false
+  image:
+    repository: rebellions/k8s-device-plugin
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # VFIO Checker configuration
+  vfioChecker:
+    image:
+      repository: rebellions/rbln-vfio-manager
+      tag: latest
+  # Resource discovery for sandbox workloads
+  resourceList:
+  - productCardNames:
+    - RBLN-CA12
+    resourceName: ATOM_PT
+    resourcePrefix: rebellions.ai
+  - productCardNames:
+    - RBLN-CA25
+    resourceName: ATOM_MAX_PT
+    resourcePrefix: rebellions.ai
+
+# VFIO Manager for VM workloads
+vfioManager:
+  enabled: false
+  image:
+    repository: rebellions/rbln-vfio-manager
+    tag: latest
+    pullPolicy: IfNotPresent

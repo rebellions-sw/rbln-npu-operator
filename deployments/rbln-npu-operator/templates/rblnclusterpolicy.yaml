@@ -1,0 +1,48 @@
+apiVersion: rebellions.ai/v1beta1
+kind: RBLNClusterPolicy
+metadata:
+  labels:
+    {{- include "rbln-npu-operator.labels" . | nindent 4 }}
+  name: rbln-cluster-policy
+spec:
+  name: {{ .Values.name }}
+  devicePlugin:
+    enabled: {{ .Values.devicePlugin.enabled }}
+    image: {{ .Values.devicePlugin.image.repository }}
+    version: {{ .Values.devicePlugin.image.tag | quote }}
+    imagePullPolicy: {{ .Values.devicePlugin.image.pullPolicy }}
+    {{- if .Values.devicePlugin.resourceList }}
+    resourceList:
+      {{- toYaml .Values.devicePlugin.resourceList | nindent 4 }}
+    {{- end }}
+
+  metricsExporter:
+    enabled: {{ .Values.metricsExporter.enabled }}
+    image: {{ .Values.metricsExporter.image.repository }}
+    imagePullPolicy: {{ .Values.metricsExporter.image.pullPolicy }}
+    version: {{ .Values.metricsExporter.image.tag | quote }}
+
+  npuFeatureDiscovery:
+    enabled: {{ .Values.npuFeatureDiscovery.enabled }}
+    image: {{ .Values.npuFeatureDiscovery.image.repository }}
+    imagePullPolicy: {{ .Values.npuFeatureDiscovery.image.pullPolicy }}
+    version: {{ .Values.npuFeatureDiscovery.image.tag | quote }}
+
+  sandboxDevicePlugin:
+    enabled: {{ .Values.sandboxDevicePlugin.enabled }}
+    image: {{ .Values.sandboxDevicePlugin.image.repository }}
+    imagePullPolicy: {{ .Values.sandboxDevicePlugin.image.pullPolicy }}
+    version: {{ .Values.sandboxDevicePlugin.image.tag | quote }}
+    {{- if .Values.sandboxDevicePlugin.resourceList }}
+    resourceList:
+      {{- toYaml .Values.sandboxDevicePlugin.resourceList | nindent 4 }}
+    {{- end }}
+    vfioChecker:
+      image: {{ .Values.sandboxDevicePlugin.vfioChecker.image.repository }}
+      version: {{ .Values.sandboxDevicePlugin.vfioChecker.image.tag | quote }}
+
+  vfioManager:
+    enabled: {{ .Values.vfioManager.enabled }}
+    image: {{ .Values.vfioManager.image.repository }}
+    imagePullPolicy: {{ .Values.vfioManager.image.pullPolicy }}
+    version: {{ .Values.vfioManager.image.tag | quote }}

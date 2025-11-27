@@ -1,0 +1,17 @@
+apiVersion: rebellions.ai/v1beta1
+kind: RBLNClusterPolicy
+metadata:
+  name: cluster-policy
+  namespace: rbln-system
+spec:
+  name: rbln
+  namespace: rbln-system
+  daemonsets: {}
+  devicePlugin:
+    enabled: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 100Mi
+  metricsExporter: {}
+  npuFeatureDiscovery: {}

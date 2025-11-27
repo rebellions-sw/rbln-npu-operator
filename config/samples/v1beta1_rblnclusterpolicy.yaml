@@ -1,0 +1,51 @@
+apiVersion: rebellions.ai/v1beta1
+kind: RBLNClusterPolicy
+metadata:
+  labels:
+    app.kubernetes.io/name: rbln-npu-operator
+  name: rbln-cluster-policy
+spec:
+  daemonsets: {}
+  devicePlugin:
+    enabled: true
+    image: rebellions/k8s-device-plugin
+    imagePullPolicy: IfNotPresent
+    version: latest
+    resourceList:
+      - resourceName: ATOM
+        resourcePrefix: rebellions.ai
+        productCardNames:
+          - RBLN-CA22
+          - RBLN-CA25
+  metricsExporter:
+    enabled: true
+    image: rebellions/rbln-metrics-exporter
+    imagePullPolicy: IfNotPresent
+    version: latest
+  name: rbln
+  npuFeatureDiscovery:
+    enabled: true
+    image: rebellions/rbln-npu-feature-discovery
+    imagePullPolicy: IfNotPresent
+    version: latest
+  sandboxDevicePlugin:
+    enabled: true
+    image: rebellions/k8s-device-plugin
+    imagePullPolicy: IfNotPresent
+    priorityClassName: system-node-critical
+    version: latest
+    vfioChecker:
+      image: rebellions/rbln-vfio-manager
+      version: "latest"
+    resourceList:
+      - resourceName: ATOM_PT
+        resourcePrefix: rebellions.ai
+        productCardNames:
+          - RBLN-CA22
+          - RBLN-CA25
+  vfioManager:
+    enabled: true
+    image: rebellions/rbln-vfio-manager
+    imagePullPolicy: IfNotPresent
+    priorityClassName: system-node-critical
+    version: "latest"

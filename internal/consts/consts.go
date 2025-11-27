@@ -1,0 +1,64 @@
+package consts
+
+// log level
+const (
+	LogLevelError = iota - 2
+	LogLevelWarning
+	LogLevelInfo
+	LogLevelDebug
+)
+
+// NPU labels
+const (
+	RBLNWorkloadConfigLabelKey      = "rebellions.ai/npu.workload.config"
+	RBLNWorkloadConfigContainer     = "container"
+	RBLNWorkloadConfigVMPassthrough = "vm-passthrough"
+	RBLNWorkloadConfigUnknown       = "unknown"
+	RBLNPresentLabelKey             = "rebellions.ai/npu.present"
+	NFDLabelPrefix                  = "feature.node.kubernetes.io/"
+)
+
+// Condition types
+const (
+	RBLNConditionTypeReady           = "Ready"
+	RBLNConditionTypeComponentsReady = "ComponentsReady"
+)
+
+// Device plugin constants
+const (
+	RBLNDevicePluginName  = "device-plugin"
+	DeviceTypeAccelerator = "accelerator"
+	RBLNVendorCode        = "1eff"
+	RBLNDriverName        = "rebellions"
+	RBLNCardCA12          = "RBLN-CA12"
+	RBLNCardCA22          = "RBLN-CA22"
+	RBLNCardCA25          = "RBLN-CA25"
+)
+
+// Sandbox device plugin constants
+const (
+	RBLNSandboxDevicePluginName = "sandbox-device-plugin"
+	RBLNSandboxDriverName       = "vfio-pci"
+)
+
+// Metrics export constants
+const (
+	RBLNMetricExporterName = "metrics-exporter"
+)
+
+// NPU feature discovery constants
+const (
+	RBLNFeatureDiscoveryName = "npu-feature-discovery"
+)
+
+// VFIO constants
+const (
+	RBLNVFIOManagerName = "vfio-manager"
+)
+
+// DeviceMapping maps product card names to their device IDs
+var DeviceMapping = map[string][]string{
+	RBLNCardCA12: {"1120", "1121"},
+	RBLNCardCA22: {"1220", "1221"},
+	RBLNCardCA25: {"1250", "1251"},
+}

@@ -1,0 +1,60 @@
+version: "2"
+run:
+  timeout: 5m
+  allow-parallel-runners: true
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/rebellions-sw/rbln-npu-operator
+
+linters:
+  enable:
+    - dupl
+    - errcheck
+    - copyloopvar
+    - ginkgolinter
+    - goconst
+    - gocyclo
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - contextcheck
+    - gocritic
+    - gosec
+  settings:
+    gosec:
+      excludes:
+        - G204
+    revive:
+      rules:
+        - name: comment-spacings
+    depguard:
+      rules:
+        main:
+          files:
+            - "api/*"
+          allow:
+            - "k8s.io/*"
+            - "sigs.k8s.io/*"
+  exclusions:
+    rules:
+      - path: "api/*"
+        linters:
+          - lll
+      - path: "internal/*"
+        linters:
+          - dupl
+          - lll

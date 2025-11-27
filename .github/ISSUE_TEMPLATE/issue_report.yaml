@@ -1,0 +1,94 @@
+---
+name: Bug Report
+description: Report a bug or unexpected behavior in rbln-npu-operator.
+title: "[Bug]: "
+labels: bug
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug in **rbln-npu-operator**!
+        Please provide as much detail as possible so we can reproduce and fix the issue efficiently.
+
+  - type: textarea
+    attributes:
+      label: Problem Description
+      description: Describe the unexpected behavior or issue in detail.
+      placeholder: |
+        * What went wrong?
+        * What did you expect to happen instead?
+        * When did the issue start occurring?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step guide to help reproduce the issue.
+      placeholder: |
+        1. Deploy the operator with the following spec...
+        2. Apply the CRD for RBLNClusterPolicy...
+        3. Observe that the device-plugin pods crash with ...
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Kubernetes Environment
+      description: Specify the Kubernetes distribution or platform.
+      placeholder: "e.g. Vanilla Kubernetes, OpenShift 4.15"
+
+  - type: input
+    attributes:
+      label: Kubernetes Version
+      description: Provide the Kubernetes version in your environment.
+      placeholder: "e.g. v1.28.3"
+
+  - type: input
+    attributes:
+      label: Operating System / Platform
+      description: Mention the OS and version used on the nodes.
+      placeholder: "e.g. Ubuntu 22.04, RHEL 9"
+
+  - type: input
+    attributes:
+      label: NPU Model
+      description: Specify the NPU model or card affected by this issue.
+      placeholder: "e.g. RBLN-CA22, RBLN-CA25"
+
+  - type: input
+    attributes:
+      label: Operator Version
+      description: Specify the rbln-npu-operator version or image tag.
+      placeholder: "e.g. v0.7.3 or rebellions-sw/rbln-npu-operator:v0.7.3"
+
+  - type: input
+    attributes:
+      label: Related Component
+      description: (Optional) Specify the component related to this bug.
+      placeholder: "e.g. device-plugin, npu-feature-discovery, metrics-exporter"
+
+  - type: textarea
+    attributes:
+      label: Logs or Error Output
+      description: Include any relevant logs, error messages, or stack traces.
+      placeholder: |
+        * Operator logs:
+          ```
+          kubectl logs deploy/rbln-npu-operator -n rbln-system
+          ```
+        * Pod logs:
+          ```
+          kubectl logs ds/rbln-device-plugin -n rbln-system
+          ```
+
+  - type: textarea
+    attributes:
+      label: Additional Information
+      description: Add any extra details, such as CRD YAML snippets, configuration files, or environment variables.
+      placeholder: |
+        * Custom CRD spec
+        * Node label configuration
+        * Related metrics or Grafana screenshots

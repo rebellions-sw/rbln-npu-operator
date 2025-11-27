@@ -1,0 +1,23 @@
+# permissions for end users to view rblnclusterpolicies.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: rbln-npu-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: rblnclusterpolicy-viewer-role
+rules:
+- apiGroups:
+  - rebellions.ai
+  resources:
+  - rblnclusterpolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - rebellions.ai
+  resources:
+  - rblnclusterpolicies/status
+  verbs:
+  - get

@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rbln-npu-operator.fullname" . }}-controller-manager
+  labels:
+    {{- include "rbln-npu-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controller-manager
+    control-plane: controller-manager
+spec:
+  replicas: {{ .Values.operator.replicas }}
+  selector:
+    matchLabels:
+      {{- include "rbln-npu-operator.selectorLabels" . | nindent 6 }}
+      control-plane: controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        {{- include "rbln-npu-operator.selectorLabels" . | nindent 8 }}
+        control-plane: controller-manager
+    spec:
+      serviceAccountName: {{ include "rbln-npu-operator.fullname" . }}
+      terminationGracePeriodSeconds: 10
+      {{- if .Values.operator.affinity }}
+      affinity:
+        {{- toYaml .Values.operator.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.operator.tolerations }}
+      tolerations:
+        {{- toYaml .Values.operator.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.operator.securityContext }}
+      securityContext:
+        {{- toYaml .Values.operator.securityContext | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: manager
+          command:
+            - /usr/bin/npu-operator
+          args:
+            - --leader-elect
+            - --health-probe-bind-address=:8081
+          env:
+            - name: OPERATOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: {{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
+          ports:
+            - containerPort: 8081
+              name: health
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- if .Values.operator.resources }}
+          resources:
+            {{- toYaml .Values.operator.resources | nindent 12 }}
+          {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
