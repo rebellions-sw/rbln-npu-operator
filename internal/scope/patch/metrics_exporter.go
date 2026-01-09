@@ -336,7 +336,7 @@ func (h *metricsExporterPatcher) handleDaemonSet(ctx context.Context, owner *rbl
 					WithContainers([]*corev1.Container{
 						k8sutil.NewContainerBuilder().
 							WithName(h.name).
-							WithImage(h.desiredSpec.Image, h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
+							WithImage(ComposeImageReference(h.desiredSpec.Registry, h.desiredSpec.Image), h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
 							WithVolumeMounts([]corev1.VolumeMount{
 								{
 									Name:      "pod-resources",

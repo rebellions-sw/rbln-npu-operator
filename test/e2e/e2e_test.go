@@ -37,6 +37,7 @@ const (
 	NPUResourceName            = corev1.ResourceName("rebellions.ai/ATOM")
 	devicePluginNodeLabelKey   = "rebellions.ai/npu.deploy.device-plugin"
 	devicePluginNodeLabelValue = "true"
+	rblnClusterPolicyCRDName   = "rblnclusterpolicies.rebellions.ai"
 )
 
 var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
@@ -53,20 +54,22 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 			*/
 
 			var (
-				helmClient      *HelmClient
-				helmReleaseName string
-				k8sClient       *e2ek8s.CoreClient
-				testNamespace   *corev1.Namespace
+				helmClient          *HelmClient
+				helmReleaseName     string
+				k8sCoreClient       *e2ek8s.CoreClient
+				k8sExtensionsClient *e2ek8s.ExtensionClient
+				testNamespace       *corev1.Namespace
 			)
 
 			BeforeAll(func(ctx context.Context) {
 				var err error
-				k8sClient = e2ek8s.NewClient(te.ClientSet.CoreV1())
+				k8sCoreClient = e2ek8s.NewClient(te.ClientSet.CoreV1())
+				k8sExtensionsClient = e2ek8s.NewExtensionClient(te.ExtClientSet)
 				nsLabels := map[string]string{
 					"e2e-run": string(testenv.RunID),
 				}
 
-				testNamespace, err = k8sClient.CreateNamespace(ctx, e2eCfg.namespace, nsLabels)
+				testNamespace, err = k8sCoreClient.CreateNamespace(ctx, e2eCfg.namespace, nsLabels)
 				if err != nil {
 					Fail(fmt.Sprintf("failed to create gpu operator namespace %s: %v", e2eCfg.namespace, err))
 				}
@@ -88,6 +91,7 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 					Values: map[string]interface{}{
 						"operator": map[string]interface{}{
 							"image": map[string]interface{}{
+								"registry":   e2eCfg.operatorRegistry,
 								"repository": e2eCfg.operatorRepository,
 								"tag":        e2eCfg.operatorVersion,
 							},
@@ -105,7 +109,12 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 					Expect(err).NotTo(HaveOccurred())
 				}
 
-				err = k8sClient.DeleteNamespace(ctx, testNamespace.Name)
+				err = k8sExtensionsClient.DeleteCRD(ctx, rblnClusterPolicyCRDName)
+				if err != nil {
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				err = k8sCoreClient.DeleteNamespace(ctx, testNamespace.Name)
 				if err != nil {
 					Expect(err).NotTo(HaveOccurred())
 				}
@@ -124,7 +133,7 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 						labelMap := map[string]string{
 							"app": operand,
 						}
-						pods, err := k8sClient.GetPodsByLabel(ctx, testNamespace.Name, labelMap)
+						pods, err := k8sCoreClient.GetPodsByLabel(ctx, testNamespace.Name, labelMap)
 						if err != nil {
 							e2elog.Infof("WARN: error retrieving pods of operand %s: %v", operand, err)
 							return false
@@ -133,7 +142,7 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 						var readyCount int
 						for _, pod := range pods {
 							e2elog.Infof("Checking status of pod %s", pod.Name)
-							isReady, err := k8sClient.IsPodReady(ctx, pod.Name, pod.Namespace)
+							isReady, err := k8sCoreClient.IsPodReady(ctx, pod.Name, pod.Namespace)
 							if err != nil {
 								e2elog.Infof("WARN: error when retrieving pod status of %s/%s: %v", testNamespace.Name, operand, err)
 								return false
@@ -148,7 +157,7 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 			})
 			It("should advertise rebellions.ai/ATOM on ready nodes", func(ctx context.Context) {
 				Eventually(func(g Gomega) bool {
-					nodes, err := k8sClient.ListNodes(ctx, map[string]string{
+					nodes, err := k8sCoreClient.ListNodes(ctx, map[string]string{
 						devicePluginNodeLabelKey: devicePluginNodeLabelValue,
 					})
 					g.Expect(err).NotTo(HaveOccurred())
@@ -156,7 +165,7 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 					found := false
 					for i := range nodes {
 						node := &nodes[i]
-						if !k8sClient.IsNodeReady(node) {
+						if !k8sCoreClient.IsNodeReady(node) {
 							continue
 						}
 

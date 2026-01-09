@@ -60,14 +60,17 @@ jobs:
     secrets: inherit
   e2e-tests:
     needs: [image-build]
-    runs-on: runner-rbln-npu-operator
+    runs-on: sw-k8s-4c-32gb
+    container:
+      image: "ubuntu:24.04"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install make
         run: |
-          sudo apt-get update
-          sudo apt-get install -y make
+          apt-get update
+          apt-get install -y make ca-certificates
+          update-ca-certificates
       - name: Set up Go
         uses: actions/setup-go@v5
         with:

@@ -582,7 +582,7 @@ func (h *vfioManagerPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1b
 				WithContainers([]*corev1.Container{
 					k8sutil.NewContainerBuilder().
 						WithName(h.name).
-						WithImage(h.desiredSpec.Image, h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
+						WithImage(ComposeImageReference(h.desiredSpec.Registry, h.desiredSpec.Image), h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
 						WithCommands([]string{"/bin/bash", "-c"}).
 						WithArgs([]string{"/bin/vfio-manage.sh bind --all && sleep inf"}).
 						WithResources(h.desiredSpec.Resources, "100m", "200Mi").

@@ -8,6 +8,7 @@ spec:
   name: {{ .Values.name }}
   devicePlugin:
     enabled: {{ .Values.devicePlugin.enabled }}
+    registry: {{ .Values.devicePlugin.image.registry }}
     image: {{ .Values.devicePlugin.image.repository }}
     version: {{ .Values.devicePlugin.image.tag | quote }}
     imagePullPolicy: {{ .Values.devicePlugin.image.pullPolicy }}
@@ -19,18 +20,21 @@ spec:
 
   metricsExporter:
     enabled: {{ .Values.metricsExporter.enabled }}
+    registry: {{ .Values.metricsExporter.image.registry }}
     image: {{ .Values.metricsExporter.image.repository }}
     imagePullPolicy: {{ .Values.metricsExporter.image.pullPolicy }}
     version: {{ .Values.metricsExporter.image.tag | quote }}
 
   npuFeatureDiscovery:
     enabled: {{ .Values.npuFeatureDiscovery.enabled }}
+    registry: {{ .Values.npuFeatureDiscovery.image.registry }}
     image: {{ .Values.npuFeatureDiscovery.image.repository }}
     imagePullPolicy: {{ .Values.npuFeatureDiscovery.image.pullPolicy }}
     version: {{ .Values.npuFeatureDiscovery.image.tag | quote }}
 
   sandboxDevicePlugin:
     enabled: {{ .Values.sandboxDevicePlugin.enabled }}
+    registry: {{ .Values.sandboxDevicePlugin.image.registry }}
     image: {{ .Values.sandboxDevicePlugin.image.repository }}
     imagePullPolicy: {{ .Values.sandboxDevicePlugin.image.pullPolicy }}
     version: {{ .Values.sandboxDevicePlugin.image.tag | quote }}
@@ -39,11 +43,13 @@ spec:
       {{- toYaml .Values.sandboxDevicePlugin.resourceList | nindent 4 }}
     {{- end }}
     vfioChecker:
+      registry: {{ .Values.sandboxDevicePlugin.vfioChecker.image.registry }}
       image: {{ .Values.sandboxDevicePlugin.vfioChecker.image.repository }}
       version: {{ .Values.sandboxDevicePlugin.vfioChecker.image.tag | quote }}
 
   vfioManager:
     enabled: {{ .Values.vfioManager.enabled }}
+    registry: {{ .Values.vfioManager.image.registry }}
     image: {{ .Values.vfioManager.image.repository }}
     imagePullPolicy: {{ .Values.vfioManager.image.pullPolicy }}
     version: {{ .Values.vfioManager.image.tag | quote }}

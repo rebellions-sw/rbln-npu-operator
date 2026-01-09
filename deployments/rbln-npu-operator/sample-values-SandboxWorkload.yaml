@@ -13,6 +13,7 @@ nfd:
 operator:
   # Operator image configuration
   image:
+    registry: docker.io
     repository: rebellions/rbln-npu-operator
     tag: latest
     pullPolicy: IfNotPresent
@@ -68,9 +69,11 @@ operator:
 devicePlugin:
   enabled: false
   image:
+    registry: docker.io
     repository: rebellions/k8s-device-plugin
     tag: latest
     pullPolicy: IfNotPresent
+  hostBinPath: /usr/bin
 
   resourceList:
   - productCardNames:
@@ -84,6 +87,7 @@ devicePlugin:
 metricsExporter:
   enabled: false
   image:
+    registry: docker.io
     repository: rebellions/rbln-metrics-exporter
     tag: latest
     pullPolicy: IfNotPresent
@@ -92,6 +96,7 @@ metricsExporter:
 npuFeatureDiscovery:
   enabled: true
   image:
+    registry: docker.io
     repository: rebellions/rbln-npu-feature-discovery
     tag: latest
     pullPolicy: IfNotPresent
@@ -100,6 +105,7 @@ npuFeatureDiscovery:
 sandboxDevicePlugin:
   enabled: true
   image:
+    registry: docker.io
     repository: rebellions/k8s-device-plugin
     tag: latest
     pullPolicy: IfNotPresent
@@ -107,6 +113,7 @@ sandboxDevicePlugin:
   # VFIO Checker configuration
   vfioChecker:
     image:
+      registry: docker.io
       repository: rebellions/rbln-vfio-manager
       tag: latest
   # Resource discovery for sandbox workloads
@@ -124,6 +131,7 @@ sandboxDevicePlugin:
 vfioManager:
   enabled: true
   image:
+    registry: docker.io
     repository: rebellions/rbln-vfio-manager
     tag: latest
     pullPolicy: IfNotPresent

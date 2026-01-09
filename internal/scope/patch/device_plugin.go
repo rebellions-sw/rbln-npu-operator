@@ -339,7 +339,6 @@ func (h *devicePluginPatcher) handleConfigMap(ctx context.Context, cp *rblnv1bet
 
 func (h *devicePluginPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1beta1.RBLNClusterPolicy) error {
 	hostRblnSMIPath := filepath.Join(h.getHostBinPath(), rblnSMIBinaryName)
-
 	builder := k8sutil.NewDaemonSetBuilder(h.name, h.namespace)
 	ds := builder.Build()
 	dsRes, err := controllerutil.CreateOrPatch(ctx, h.client, ds, func() error {
@@ -434,7 +433,7 @@ func (h *devicePluginPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1
 				WithContainers([]*corev1.Container{
 					k8sutil.NewContainerBuilder().
 						WithName(h.name).
-						WithImage(h.desiredSpec.Image, h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
+						WithImage(ComposeImageReference(h.desiredSpec.Registry, h.desiredSpec.Image), h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
 						WithResources(h.desiredSpec.Resources, "250m", "40Mi").
 						WithVolumeMounts([]corev1.VolumeMount{
 							{

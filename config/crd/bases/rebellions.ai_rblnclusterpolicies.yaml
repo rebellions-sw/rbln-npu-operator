@@ -1998,6 +1998,10 @@ spec:
                     description: PriorityClassName specifies the priority class for
                       the DaemonSet pods
                     type: string
+                  registry:
+                    default: docker.io
+                    description: Registry override for the RBLN Device Plugin image
+                    type: string
                   resourceList:
                     default:
                     - productCardNames:
@@ -3098,6 +3102,10 @@ spec:
                     description: PriorityClassName specifies the priority class for
                       the DaemonSet pods
                     type: string
+                  registry:
+                    default: docker.io
+                    description: Registry override for the RBLN Metrics Exporter image
+                    type: string
                   resources:
                     description: Resources specifies the resource requirements for
                       the DaemonSet pods
@@ -3198,8 +3206,6 @@ spec:
                     default: latest
                     description: RBLN Metrics Exporter image tag
                     type: string
-                required:
-                - version
                 type: object
               name:
                 default: rbln
@@ -4175,6 +4181,11 @@ spec:
                     description: PriorityClassName specifies the priority class for
                       the DaemonSet pods
                     type: string
+                  registry:
+                    default: docker.io
+                    description: Registry override for the RBLN NPU Feature Discovery
+                      image
+                    type: string
                   resources:
                     description: Resources specifies the resource requirements for
                       the DaemonSet pods
@@ -4275,8 +4286,6 @@ spec:
                     default: latest
                     description: RBLN NPU Feature Discovery image tag
                     type: string
-                required:
-                - version
                 type: object
               sandboxDevicePlugin:
                 description: SandboxDevicePlugin component spec
@@ -5246,6 +5255,11 @@ spec:
                     description: PriorityClassName specifies the priority class for
                       the DaemonSet pods
                     type: string
+                  registry:
+                    default: docker.io
+                    description: Registry override for the RBLN Sandbox Device Plugin
+                      image
+                    type: string
                   resourceList:
                     default:
                     - productCardNames:
@@ -5386,6 +5400,10 @@ spec:
                         default: rebellions/rbln-vfio-manager
                         description: VFIO Checker image name
                         pattern: '[a-zA-Z0-9\-]+'
+                        type: string
+                      registry:
+                        default: docker.io
+                        description: Registry override for the VFIO Checker image
                         type: string
                       version:
                         default: latest
@@ -6360,6 +6378,10 @@ spec:
                     default: system-node-critical
                     description: PriorityClassName specifies the priority class for
                       the DaemonSet pods
+                    type: string
+                  registry:
+                    default: docker.io
+                    description: Registry override for the RBLN VFIO Manager image
                     type: string
                   resources:
                     description: Resources specifies the resource requirements for
