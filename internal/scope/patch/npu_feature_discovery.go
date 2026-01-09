@@ -274,7 +274,7 @@ func (h *npuFeatureDiscoveryPatcher) handleDaemonSet(ctx context.Context, owner 
 				WithContainers([]*corev1.Container{
 					k8sutil.NewContainerBuilder().
 						WithName(h.name).
-						WithImage(h.desiredSpec.Image, h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
+						WithImage(ComposeImageReference(h.desiredSpec.Registry, h.desiredSpec.Image), h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
 						WithEnvs([]corev1.EnvVar{
 							{
 								Name: "NODE_IP",

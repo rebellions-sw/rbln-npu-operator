@@ -405,7 +405,7 @@ func (h *sandboxDevicePluginPatcher) handleDaemonSet(ctx context.Context, owner 
 				WithInitContainers([]*corev1.Container{
 					k8sutil.NewContainerBuilder().
 						WithName("vfio-bind-checker").
-						WithImage(h.desiredSpec.VFIOChecker.Image, h.desiredSpec.VFIOChecker.Version, h.desiredSpec.ImagePullPolicy).
+						WithImage(ComposeImageReference(h.desiredSpec.VFIOChecker.Registry, h.desiredSpec.VFIOChecker.Image), h.desiredSpec.VFIOChecker.Version, h.desiredSpec.ImagePullPolicy).
 						WithCommands([]string{
 							"/bin/sh",
 							"-c",
@@ -438,7 +438,7 @@ echo "VFIO-PCI binding check completed."`,
 				WithContainers([]*corev1.Container{
 					k8sutil.NewContainerBuilder().
 						WithName(h.name).
-						WithImage(h.desiredSpec.Image, h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
+						WithImage(ComposeImageReference(h.desiredSpec.Registry, h.desiredSpec.Image), h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
 						WithResources(h.desiredSpec.Resources, "250m", "40Mi").
 						WithVolumeMounts([]corev1.VolumeMount{
 							{

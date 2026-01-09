@@ -29,8 +29,10 @@ import (
 )
 
 type e2eTestConfig struct {
-	helmChart          string
-	namespace          string
+	helmChart string
+	namespace string
+
+	operatorRegistry   string
 	operatorRepository string
 	operatorVersion    string
 }
@@ -45,6 +47,8 @@ func TestMain(m *testing.M) {
 		"rbln-system",
 		"Namespace name to use for the rbln-npu-operator helm deploys",
 	)
+
+	flag.StringVar(&e2eCfg.operatorRegistry, "operator-registry", "", "NPU Operator image registry to use")
 	flag.StringVar(&e2eCfg.operatorRepository, "operator-repository", "", "NPU Operator image repository to use")
 	flag.StringVar(&e2eCfg.operatorVersion, "operator-version", "", "NPU Operator image tag to use")
 	e2etestenv.RegisterContextFlags(flag.CommandLine)

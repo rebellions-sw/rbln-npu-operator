@@ -1,6 +1,7 @@
 GO_CMD ?= go
 
-OPERATOR_REPOSITORY ?= docker.io/rebellions/rbln-npu-operator
+OPERATOR_REGISTRY ?= docker.io
+OPERATOR_REPOSITORY ?= rebellions/rbln-npu-operator
 
 HELM_CHART ?= $(CURDIR)/../../deployments/rbln-npu-operator
 KUBE_CONTEXT ?=
@@ -18,6 +19,7 @@ e2e-test:
 	$(GO_CMD) test -v . -args \
 		-kubeconfig=$(KUBECONFIG) \
 		$(if $(strip $(KUBE_CONTEXT)),-context=$(KUBE_CONTEXT)) \
+		-operator-registry=$(OPERATOR_REGISTRY) \
 		-operator-repository=$(OPERATOR_REPOSITORY) \
 		-operator-version=$(OPERATOR_VERSION) \
 		-helm-chart=$(HELM_CHART)

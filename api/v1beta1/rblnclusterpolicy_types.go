@@ -148,6 +148,12 @@ type RBLNVFIOManagerSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Image string `json:"image,omitempty"`
 
+	// Registry override for the RBLN VFIO Manager image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
+
 	// RBLN VFIO Manager image tag
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:="latest"
@@ -178,6 +184,12 @@ type RBLNSandboxDevicePluginSpec struct {
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Image string `json:"image,omitempty"`
+
+	// Registry override for the RBLN Sandbox Device Plugin image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
 
 	// RBLN Sandbox Device Plugin image tag
 	// +kubebuilder:validation:Optional
@@ -212,6 +224,12 @@ type VFIOCheckerSpec struct {
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Image string `json:"image,omitempty"`
+
+	// Registry override for the VFIO Checker image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
 
 	// VFIO Checker image tag
 	// +kubebuilder:validation:Optional
@@ -253,6 +271,12 @@ type RBLNDevicePluginSpec struct {
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Image string `json:"image,omitempty"`
+
+	// Registry override for the RBLN Device Plugin image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
 
 	// RBLN Device Plugin image tag
 	// +kubebuilder:validation:Optional
@@ -296,7 +320,14 @@ type RBLNMetricsExporterSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Image string `json:"image,omitempty"`
 
+	// Registry override for the RBLN Metrics Exporter image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
+
 	// RBLN Metrics Exporter image tag
+	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=latest
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Version",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Version string `json:"version"`
@@ -325,7 +356,14 @@ type RBLNNPUFeatureDiscoverySpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Image string `json:"image,omitempty"`
 
+	// Registry override for the RBLN NPU Feature Discovery image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
+
 	// RBLN NPU Feature Discovery image tag
+	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:=latest
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Version",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	Version string `json:"version"`

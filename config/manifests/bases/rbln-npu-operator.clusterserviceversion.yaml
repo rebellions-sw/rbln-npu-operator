@@ -134,6 +134,11 @@ spec:
         path: devicePlugin.priorityClassName
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN Device Plugin image
+        displayName: Registry
+        path: devicePlugin.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: ResourceList is the list of resources to be managed by the device
           plugin
         displayName: Resource List
@@ -219,6 +224,11 @@ spec:
         path: metricsExporter.priorityClassName
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN Metrics Exporter image
+        displayName: Registry
+        path: metricsExporter.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: Resources specifies the resource requirements for the DaemonSet
           pods
         displayName: Resource Requirements
@@ -294,6 +304,11 @@ spec:
         path: npuFeatureDiscovery.priorityClassName
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN NPU Feature Discovery image
+        displayName: Registry
+        path: npuFeatureDiscovery.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: Resources specifies the resource requirements for the DaemonSet
           pods
         displayName: Resource Requirements
@@ -359,6 +374,11 @@ spec:
         path: sandboxDevicePlugin.priorityClassName
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN Sandbox Device Plugin image
+        displayName: Registry
+        path: sandboxDevicePlugin.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: ProductCardNames is the name of the product card
         displayName: Product Card Names
         path: sandboxDevicePlugin.resourceList[0].productCardNames
@@ -399,6 +419,11 @@ spec:
       - description: VFIO Checker image name
         displayName: Image
         path: sandboxDevicePlugin.vfioChecker.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the VFIO Checker image
+        displayName: Registry
+        path: sandboxDevicePlugin.vfioChecker.registry
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
       - description: VFIO Checker image tag
@@ -452,6 +477,11 @@ spec:
           pods
         displayName: PriorityClassName
         path: vfioManager.priorityClassName
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN VFIO Manager image
+        displayName: Registry
+        path: vfioManager.registry
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
       - description: Resources specifies the resource requirements for the DaemonSet

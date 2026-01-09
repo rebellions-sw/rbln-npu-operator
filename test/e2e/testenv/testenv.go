@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -16,6 +17,7 @@ type TestEnv struct {
 	BaseName     string
 	clientConfig *rest.Config
 	ClientSet    clientset.Interface
+	ExtClientSet apiextensionsclient.Interface
 }
 
 func NewTestEnv(baseName string) *TestEnv {
@@ -38,11 +40,14 @@ func (te *TestEnv) BeforeEach(ctx context.Context) {
 	te.clientConfig = rest.CopyConfig(cfg)
 	te.ClientSet, err = clientset.NewForConfig(cfg)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	te.ExtClientSet, err = apiextensionsclient.NewForConfig(cfg)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 }
 
 func (te *TestEnv) AfterEach(ctx context.Context) {
 	defer func() {
 		te.clientConfig = nil
 		te.ClientSet = nil
+		te.ExtClientSet = nil
 	}()
 }
