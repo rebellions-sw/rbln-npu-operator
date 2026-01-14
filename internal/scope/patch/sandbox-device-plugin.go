@@ -439,6 +439,8 @@ echo "VFIO-PCI binding check completed."`,
 					k8sutil.NewContainerBuilder().
 						WithName(h.name).
 						WithImage(ComposeImageReference(h.desiredSpec.Registry, h.desiredSpec.Image), h.desiredSpec.Version, h.desiredSpec.ImagePullPolicy).
+						WithCommands([]string{"/usr/bin/sriovdp"}).
+						WithArgs([]string{"-v=10", "--logtostderr", "--use-cdi=false"}).
 						WithResources(h.desiredSpec.Resources, "250m", "40Mi").
 						WithVolumeMounts([]corev1.VolumeMount{
 							{
