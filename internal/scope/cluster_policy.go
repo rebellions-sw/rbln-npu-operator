@@ -29,7 +29,7 @@ type RBLNClusterPolicyScope struct {
 	patcher []patch.Patcher
 }
 
-func NewRBLNClusterPolicyScope(ctx context.Context, client client.Client, log logr.Logger, scheme *runtime.Scheme, clusterPolicy *rblnv1beta1.RBLNClusterPolicy, openshiftVersion string) (*RBLNClusterPolicyScope, error) {
+func NewRBLNClusterPolicyScope(ctx context.Context, client client.Client, log logr.Logger, scheme *runtime.Scheme, clusterPolicy *rblnv1beta1.RBLNClusterPolicy, openshiftVersion string, containerRuntime string) (*RBLNClusterPolicyScope, error) {
 	s := &RBLNClusterPolicyScope{
 		client:    client,
 		ctx:       ctx,
@@ -68,6 +68,12 @@ func NewRBLNClusterPolicyScope(ctx context.Context, client client.Client, log lo
 	}
 	s.patcher = append(s.patcher, mep)
 
+	rdp, err := patch.NewRBLNDaemonPatcher(client, log, s.namespace, &clusterPolicy.Spec, scheme, openshiftVersion)
+	if err != nil {
+		return s, err
+	}
+	s.patcher = append(s.patcher, rdp)
+
 	dpp, err := patch.NewDevicePluginPatcher(client, log, s.namespace, &clusterPolicy.Spec, scheme, openshiftVersion)
 	if err != nil {
 		return s, err
@@ -79,6 +85,18 @@ func NewRBLNClusterPolicyScope(ctx context.Context, client client.Client, log lo
 		return s, err
 	}
 	s.patcher = append(s.patcher, sdp)
+
+	ctp, err := patch.NewContainerToolkitPatcher(client, log, s.namespace, &clusterPolicy.Spec, scheme, openshiftVersion, containerRuntime)
+	if err != nil {
+		return s, err
+	}
+	s.patcher = append(s.patcher, ctp)
+
+	vp, err := patch.NewValidatorPatcher(client, log, s.namespace, &clusterPolicy.Spec, scheme, openshiftVersion)
+	if err != nil {
+		return s, err
+	}
+	s.patcher = append(s.patcher, vp)
 
 	return s, nil
 }
@@ -129,13 +147,13 @@ func (s *RBLNClusterPolicyScope) LabelRblnNodes() (bool, int, error) {
 		return false, 0, fmt.Errorf("failed to list nodes: %s", err.Error())
 	}
 
-	nfdInstalled := true
+	nfdInstalled := false
 	rblnNodeCnt := 0
 	updateLabels := false
 	for _, node := range nodeList.Items {
 		labels := node.GetLabels()
-		if nfdInstalled {
-			nfdInstalled = hasNFDLabels(labels)
+		if !nfdInstalled && hasNFDLabels(labels) {
+			nfdInstalled = true
 		}
 		// set rebellions present label according to device feature discovery
 		if !hasRBLNPresentLabel(labels) && hasRBLNDeviceLabel(labels) {
@@ -211,10 +229,13 @@ var rblnDeviceLabels = map[string]string{
 
 var rblnComponentLabels = map[string]map[string]string{
 	consts.RBLNWorkloadConfigContainer: {
-		"rebellions.ai/npu.deploy.driver-manager":        "true",
+		"rebellions.ai/npu.deploy.driver":                "true",
 		"rebellions.ai/npu.deploy.device-plugin":         "true",
 		"rebellions.ai/npu.deploy.metrics-exporter":      "true",
+		"rebellions.ai/npu.deploy.rbln-daemon":           "true",
 		"rebellions.ai/npu.deploy.npu-feature-discovery": "true",
+		"rebellions.ai/npu.deploy.operator-validator":    "true",
+		"rebellions.ai/npu.deploy.container-toolkit":     "true",
 	},
 	consts.RBLNWorkloadConfigVMPassthrough: {
 		"rebellions.ai/npu.deploy.vfio-manager":          "true",

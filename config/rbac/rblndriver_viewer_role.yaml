@@ -1,0 +1,23 @@
+# permissions for end users to view rblndrivers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: rbln-npu-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: rblndriver-viewer-role
+rules:
+- apiGroups:
+  - rebellions.ai
+  resources:
+  - rblndrivers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - rebellions.ai
+  resources:
+  - rblndrivers/status
+  verbs:
+  - get

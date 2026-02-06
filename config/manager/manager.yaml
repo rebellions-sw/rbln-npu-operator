@@ -37,7 +37,7 @@ spec:
           - --leader-elect
           - --health-probe-bind-address=:8081
         image: docker.io/rebellions/rbln-npu-operator:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

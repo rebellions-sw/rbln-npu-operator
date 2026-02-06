@@ -38,6 +38,13 @@ type e2eTestConfig struct {
 
 	pypiUsername string
 	pypiPassword string
+
+	registryUser     string
+	registryPassword string
+
+	validatorRegistry   string
+	validatorRepository string
+	validatorVersion    string
 }
 
 var e2eCfg = e2eTestConfig{}
@@ -66,6 +73,36 @@ func TestMain(m *testing.M) {
 		"pypi-password",
 		os.Getenv("PYPI_PASSWORD"),
 		"PyPI password for pypi.rebellions.in",
+	)
+	flag.StringVar(
+		&e2eCfg.registryUser,
+		"registry-user",
+		os.Getenv("E2E_CONTAINER_REGISTRY_USER"),
+		"Container registry username for repo.rebellions.ai",
+	)
+	flag.StringVar(
+		&e2eCfg.registryPassword,
+		"registry-password",
+		os.Getenv("E2E_CONTAINER_REGISTRY_PASSWORD"),
+		"Container registry password for repo.rebellions.ai",
+	)
+	flag.StringVar(
+		&e2eCfg.validatorRegistry,
+		"validator-registry",
+		os.Getenv("VALIDATOR_REGISTRY"),
+		"Validator image registry override",
+	)
+	flag.StringVar(
+		&e2eCfg.validatorRepository,
+		"validator-repository",
+		os.Getenv("VALIDATOR_REPOSITORY"),
+		"Validator image repository override",
+	)
+	flag.StringVar(
+		&e2eCfg.validatorVersion,
+		"validator-version",
+		os.Getenv("VALIDATOR_VERSION"),
+		"Validator image tag override",
 	)
 	e2etestenv.RegisterContextFlags(flag.CommandLine)
 	flag.Parse()

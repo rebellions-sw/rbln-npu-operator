@@ -1,0 +1,27 @@
+# permissions for end users to edit rblndrivers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: rbln-npu-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: rblndriver-editor-role
+rules:
+- apiGroups:
+  - rebellions.ai
+  resources:
+  - rblndrivers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rebellions.ai
+  resources:
+  - rblndrivers/status
+  verbs:
+  - get

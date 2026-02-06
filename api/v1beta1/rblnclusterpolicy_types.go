@@ -17,6 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -62,9 +65,21 @@ type RBLNClusterPolicySpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Metrics Exporter",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced"
 	MetricsExporter RBLNMetricsExporterSpec `json:"metricsExporter"`
 
+	// RBLN Daemon component spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="RBLN Daemon",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced"
+	RBLNDaemon RBLNDaemonSpec `json:"rblnDaemon"`
+
 	// NPUFeatureDiscovery component spec
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="NPU Feature Discovery",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced"
 	NPUFeatureDiscovery RBLNNPUFeatureDiscoverySpec `json:"npuFeatureDiscovery"`
+
+	// ContainerToolkit component spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Container Toolkit",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced"
+	ContainerToolkit RBLNContainerToolkitSpec `json:"containerToolkit"`
+
+	// Validator defines the spec for operator-validator daemonset
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Validator",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced"
+	Validator ValidatorSpec `json:"validator,omitempty"`
 }
 
 // DaemonsetsSpec indicates common configuration for all Daemonsets managed by RBLN NPU Operator
@@ -342,6 +357,55 @@ type RBLNMetricsExporterSpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
+// RBLNDaemonSpec defines the desired state of RBLN Daemon
+type RBLNDaemonSpec struct {
+	// Enabled indicates if deployment of RBLN daemon is enabled
+	// +kubebuilder:default:=true
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enable RBLN Daemon deployment",xDescriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+	Enabled bool `json:"enabled,omitempty"`
+
+	// RBLN Daemon image name
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=rebellions/rbln-daemon
+	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Image string `json:"image,omitempty"`
+
+	// Registry override for the RBLN Daemon image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
+
+	// RBLN Daemon image tag
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=latest
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Version",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Version string `json:"version"`
+
+	// PodSpec defines common DaemonSet configurations
+	// +kubebuilder:validation:Optional
+	PodSpec `json:",inline"`
+
+	// PriorityClassName specifies the priority class for the DaemonSet pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="PriorityClassName",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// Optional: List of arguments
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Arguments",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Args []string `json:"args,omitempty"`
+
+	// Optional: List of environment variables
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Environment Variables",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Env []corev1.EnvVar `json:"env,omitempty"`
+
+	// HostPort represents host port that needs to be bound for rbln-daemon (Default: 50051)
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Host port to bind for rbln-daemon",xDescriptors="urn:alm:descriptor:com.tectonic.ui:number"
+	// +kubebuilder:default:=50051
+	HostPort int32 `json:"hostPort,omitempty"`
+}
+
 // RBLNNPUFeatureDiscoverySpec defines the desired state of RBLNNPUFeatureDiscovery
 type RBLNNPUFeatureDiscoverySpec struct {
 	// Enabled indicates if deployment of RBLN NPU feature discovery is enabled
@@ -378,12 +442,143 @@ type RBLNNPUFeatureDiscoverySpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
+// RBLNContainerToolkitSpec defines the desired state of RBLN container toolkit
+type RBLNContainerToolkitSpec struct {
+	// Enabled indicates if deployment of RBLN container toolkit is enabled
+	// +kubebuilder:default:=true
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enable RBLN Container Toolkit deployment",xDescriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+	Enabled bool `json:"enabled,omitempty"`
+
+	// RBLN Container Toolkit image name
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=rebellions/rbln-container-toolkit
+	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Image string `json:"image,omitempty"`
+
+	// Registry override for the RBLN Container Toolkit image
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=docker.io
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Registry",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Registry string `json:"registry,omitempty"`
+
+	// RBLN Container Toolkit image tag
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=latest
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Version",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	Version string `json:"version,omitempty"`
+
+	// PodSpec defines common DaemonSet configurations
+	// +kubebuilder:validation:Optional
+	PodSpec `json:",inline"`
+
+	// PriorityClassName specifies the priority class for the DaemonSet pods
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="PriorityClassName",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// Optional: List of arguments
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Arguments",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Args []string `json:"args,omitempty"`
+
+	// Optional: List of environment variables
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Environment Variables",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Env []corev1.EnvVar `json:"env,omitempty"`
+}
+
+// ValidatorSpec describes configuration options for validation daemonset
+type ValidatorSpec struct {
+	// Plugin validator spec
+	Plugin PluginValidatorSpec `json:"plugin,omitempty"`
+
+	// Toolkit validator spec
+	Toolkit ToolkitValidatorSpec `json:"toolkit,omitempty"`
+
+	// Driver validator spec
+	Driver DriverValidatorSpec `json:"driver,omitempty"`
+
+	// VFIOPCI validator spec
+	VFIOPCI VFIOPCIValidatorSpec `json:"vfioPCI,omitempty"`
+
+	// Validator image registry
+	// +kubebuilder:validation:Optional
+	Registry string `json:"registry,omitempty"`
+
+	// Validator image name
+	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
+	Image string `json:"image,omitempty"`
+
+	// Validator image tag
+	// +kubebuilder:validation:Optional
+	Version string `json:"version,omitempty"`
+
+	// Image pull policy
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image Pull Policy",xDescriptors="urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+
+	// Image pull secrets
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Image pull secrets",xDescriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+
+	// Optional: Define resources requests and limits for each pod
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Resource Requirements",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
+	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// Optional: List of arguments
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Arguments",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Args []string `json:"args,omitempty"`
+
+	// Optional: List of environment variables
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Environment Variables",xDescriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Env []corev1.EnvVar `json:"env,omitempty"`
+}
+
+// PluginValidatorSpec describes configuration for RBLN Device Plugin validation
+type PluginValidatorSpec struct {
+	// Optional: List of environment variables
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Environment Variables"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Env []corev1.EnvVar `json:"env,omitempty"`
+}
+
+// ToolkitValidatorSpec describes configuration for RBLN Container Toolkit validation
+type ToolkitValidatorSpec struct {
+	// Optional: List of environment variables
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Environment Variables"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Env []corev1.EnvVar `json:"env,omitempty"`
+}
+
+// DriverValidatorSpec describes configuration for RBLN Driver validation
+type DriverValidatorSpec struct {
+	// Optional: List of environment variables
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Environment Variables"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Env []corev1.EnvVar `json:"env,omitempty"`
+}
+
+// VFIOPCIValidatorSpec describes configuration for VFIO-PCI validation
+type VFIOPCIValidatorSpec struct {
+	// Optional: List of environment variables
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Environment Variables"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text"
+	Env []corev1.EnvVar `json:"env,omitempty"`
+}
+
 // IsEnabled implementations for component specs
 func (s RBLNVFIOManagerSpec) IsEnabled() bool         { return s.Enabled }
 func (s RBLNDevicePluginSpec) IsEnabled() bool        { return s.Enabled }
 func (s RBLNMetricsExporterSpec) IsEnabled() bool     { return s.Enabled }
+func (s RBLNDaemonSpec) IsEnabled() bool              { return s.Enabled }
 func (s RBLNNPUFeatureDiscoverySpec) IsEnabled() bool { return s.Enabled }
 func (s RBLNSandboxDevicePluginSpec) IsEnabled() bool { return s.Enabled }
+func (s RBLNContainerToolkitSpec) IsEnabled() bool    { return s.Enabled }
 
 type ClusterState string
 
@@ -457,4 +652,21 @@ func init() {
 // SetStatus sets state of ClusterPolicy instance
 func (p *RBLNClusterPolicy) SetStatus(s ClusterState) {
 	p.Status.State = s
+}
+
+// GetValidatorImage returns a validator image reference built from the spec.
+func (v *ValidatorSpec) GetValidatorImage() (string, error) {
+	image := strings.TrimPrefix(strings.TrimSpace(v.Image), "/")
+	if image == "" {
+		return "", fmt.Errorf("validator image is required")
+	}
+	registry := strings.TrimSuffix(strings.TrimSpace(v.Registry), "/")
+	if registry != "" {
+		image = fmt.Sprintf("%s/%s", registry, image)
+	}
+	version := strings.TrimSpace(v.Version)
+	if version != "" {
+		image = fmt.Sprintf("%s:%s", image, version)
+	}
+	return image, nil
 }

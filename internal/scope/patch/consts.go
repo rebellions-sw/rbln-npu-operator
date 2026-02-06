@@ -7,4 +7,7 @@ const (
 
 	DaemonSetPodsNotReady = "DaemonSetAllPodsNotReady"
 	DaemonSetAllPodsReady = "DaemonSetAllPodsReady"
+
+	validationsVolumeName = "run-rbln-validations"
+	validationsMountPath  = "/run/rbln/validations"
 )

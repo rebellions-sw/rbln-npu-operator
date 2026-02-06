@@ -49,6 +49,86 @@ spec:
         name: rbac.authorization.k8s.io
         version: v1
       specDescriptors:
+      - description: ContainerToolkit component spec
+        displayName: Container Toolkit
+        path: containerToolkit
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Affinity specifies the affinity for the DaemonSet pods
+        displayName: Affinity
+        path: containerToolkit.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Affinity
+      - description: Annotations specifies the annotations for the DaemonSet pods
+        displayName: Annotations
+        path: containerToolkit.annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: List of arguments'
+        displayName: Arguments
+        path: containerToolkit.args
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: Enabled indicates if deployment of RBLN container toolkit is
+          enabled
+        displayName: Enable RBLN Container Toolkit deployment
+        path: containerToolkit.enabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: 'Optional: List of environment variables'
+        displayName: Environment Variables
+        path: containerToolkit.env
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: RBLN Container Toolkit image name
+        displayName: Image
+        path: containerToolkit.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: ImagePullPolicy specifies the image pull policy for the DaemonSet
+          pods
+        displayName: Image Pull Policy
+        path: containerToolkit.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: ImagePullSecrets specifies the image pull secrets for the DaemonSet
+          pods
+        displayName: Image pull secrets
+        path: containerToolkit.imagePullSecrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Labels specifies the labels for the DaemonSet pods
+        displayName: Labels
+        path: containerToolkit.labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: PriorityClassName specifies the priority class for the DaemonSet
+          pods
+        displayName: PriorityClassName
+        path: containerToolkit.priorityClassName
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN Container Toolkit image
+        displayName: Registry
+        path: containerToolkit.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Resources specifies the resource requirements for the DaemonSet
+          pods
+        displayName: Resource Requirements
+        path: containerToolkit.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - description: Tolerations specifies the tolerations for the DaemonSet pods
+        displayName: Tolerations
+        path: containerToolkit.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Tolerations
+      - description: RBLN Container Toolkit image tag
+        displayName: Version
+        path: containerToolkit.version
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: DaemonSets is common spec of rbln daemonset components
         displayName: Daemonsets
         path: daemonsets
@@ -325,6 +405,91 @@ spec:
         path: npuFeatureDiscovery.version
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: RBLN Daemon component spec
+        displayName: RBLN Daemon
+        path: rblnDaemon
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Affinity specifies the affinity for the DaemonSet pods
+        displayName: Affinity
+        path: rblnDaemon.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Affinity
+      - description: Annotations specifies the annotations for the DaemonSet pods
+        displayName: Annotations
+        path: rblnDaemon.annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: List of arguments'
+        displayName: Arguments
+        path: rblnDaemon.args
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: Enabled indicates if deployment of RBLN daemon is enabled
+        displayName: Enable RBLN Daemon deployment
+        path: rblnDaemon.enabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: 'Optional: List of environment variables'
+        displayName: Environment Variables
+        path: rblnDaemon.env
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'HostPort represents host port that needs to be bound for rbln-daemon
+          (Default: 50051)'
+        displayName: Host port to bind for rbln-daemon
+        path: rblnDaemon.hostPort
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: RBLN Daemon image name
+        displayName: Image
+        path: rblnDaemon.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: ImagePullPolicy specifies the image pull policy for the DaemonSet
+          pods
+        displayName: Image Pull Policy
+        path: rblnDaemon.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: ImagePullSecrets specifies the image pull secrets for the DaemonSet
+          pods
+        displayName: Image pull secrets
+        path: rblnDaemon.imagePullSecrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Labels specifies the labels for the DaemonSet pods
+        displayName: Labels
+        path: rblnDaemon.labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: PriorityClassName specifies the priority class for the DaemonSet
+          pods
+        displayName: PriorityClassName
+        path: rblnDaemon.priorityClassName
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN Daemon image
+        displayName: Registry
+        path: rblnDaemon.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Resources specifies the resource requirements for the DaemonSet
+          pods
+        displayName: Resource Requirements
+        path: rblnDaemon.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - description: Tolerations specifies the tolerations for the DaemonSet pods
+        displayName: Tolerations
+        path: rblnDaemon.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Tolerations
+      - description: RBLN Daemon image tag
+        displayName: Version
+        path: rblnDaemon.version
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: SandboxDevicePlugin component spec
         displayName: Sandbox Device Plugin
         path: sandboxDevicePlugin
@@ -431,6 +596,36 @@ spec:
         path: sandboxDevicePlugin.vfioChecker.version
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Validator defines the spec for operator-validator daemonset
+        displayName: Validator
+        path: validator
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'Optional: List of arguments'
+        displayName: Arguments
+        path: validator.args
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: List of environment variables'
+        displayName: Environment Variables
+        path: validator.env
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: Image pull policy
+        displayName: Image Pull Policy
+        path: validator.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Image pull secrets
+        displayName: Image pull secrets
+        path: validator.imagePullSecrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: Define resources requests and limits for each pod'
+        displayName: Resource Requirements
+        path: validator.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - description: VFIOManager component spec
         displayName: VFIO Manager
         path: vfioManager
@@ -518,6 +713,17 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.conditions
       version: v1beta1
+    - description: RBLNDriver is the Schema for the rblndrivers API
+      displayName: RBLNDriver
+      kind: RBLNDriver
+      name: rblndrivers.rebellions.ai
+      specDescriptors:
+      - description: Image pull policy
+        displayName: Image Pull Policy
+        path: manager.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      version: v1alpha1
   description: RBLN Operator automates the deployment and management of RBLN NPU drivers,
     device plugins, CRDs, firmware updates, and health monitoring for seamless integration
     into Kubernetes.

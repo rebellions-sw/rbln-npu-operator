@@ -129,12 +129,22 @@ build:
 cmd: ## Build the main executable
 	@echo "Building npu-operator executable..."
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) \
-		go build -o npu-operator $(BUILD_FLAGS) $(COMMAND_BUILD_OPTIONS) $(MODULE)/cmd
+		go build -o npu-operator $(BUILD_FLAGS) $(COMMAND_BUILD_OPTIONS) $(MODULE)/cmd/npu-operator
 	@echo "npu-operator executable built successfully."
+
+.PHONY: cmd-validator
+cmd-validator: ## Build the validator executable
+	@echo "Building rbln-validator executable..."
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) \
+		go build -o rbln-validator $(BUILD_FLAGS) $(COMMAND_BUILD_OPTIONS) $(MODULE)/cmd/rbln-validator
+	@echo "rbln-validator executable built successfully."
+
+.PHONY: cmds
+cmds: cmd cmd-validator ## Build all executables
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./cmd/main.go
+	go run ./cmd/npu-operator
 
 
 .PHONY: build-installer
@@ -160,7 +170,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image $(IMAGE_NAME)=${IMAGE}
-	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
+	$(KUSTOMIZE) build config/default | $(KUBECTL) apply $(APPLY_FLAGS) -f -
 
 .PHONY: undeploy
 undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
@@ -173,6 +183,7 @@ $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
 KUBECTL ?= kubectl
+APPLY_FLAGS ?= --server-side
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest

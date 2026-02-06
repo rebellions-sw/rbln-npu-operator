@@ -21,8 +21,8 @@ COPY cmd/ cmd/
 COPY api/ api/
 COPY internal/ internal/
 
-# Build the binary using Makefile
-RUN make cmd
+# Build the binaries using Makefile
+RUN make cmds
 
 # Use distroless as minimal base image to package the npu-operator-manager binary
 FROM redhat/ubi9-minimal:9.6
@@ -40,6 +40,7 @@ LABEL \
     com.redhat.component="rbln-npu-operator"
 
 COPY --from=builder /workspace/npu-operator /usr/bin/
+COPY --from=builder /workspace/rbln-validator /usr/bin/
 COPY LICENSE /licenses/LICENSE
 
 USER 65532:65532

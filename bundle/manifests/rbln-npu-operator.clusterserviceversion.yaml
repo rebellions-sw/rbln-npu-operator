@@ -5,6 +5,56 @@ metadata:
     alm-examples: |-
       [
         {
+          "apiVersion": "rebellions.ai/v1alpha1",
+          "kind": "RBLNDriver",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "rbln-npu-operator"
+            },
+            "name": "rblndriver-sample"
+          },
+          "spec": {
+            "annotations": {
+              "example.rebellions.ai/driver": "true"
+            },
+            "env": [
+              {
+                "name": "RBLN_DRIVER_LOG_LEVEL",
+                "value": "info"
+              }
+            ],
+            "image": "playground/rbln-driver",
+            "imagePullPolicy": "Always",
+            "labels": {
+              "app.kubernetes.io/component": "driver"
+            },
+            "manager": {
+              "env": [
+                {
+                  "name": "RBLN_MANAGER_LOG_LEVEL",
+                  "value": "info"
+                }
+              ],
+              "image": "rebellions/rbln-k8s-driver-manager",
+              "imagePullPolicy": "IfNotPresent",
+              "registry": "docker.io",
+              "version": "latest"
+            },
+            "registry": "harbor.k8s.rebellions.in",
+            "resources": {
+              "limits": {
+                "cpu": "500m",
+                "memory": "128Mi"
+              },
+              "requests": {
+                "cpu": "250m",
+                "memory": "64Mi"
+              }
+            },
+            "version": "3.0.0-rc3"
+          }
+        },
+        {
           "apiVersion": "rebellions.ai/v1beta1",
           "kind": "RBLNClusterPolicy",
           "metadata": {
@@ -14,11 +64,20 @@ metadata:
             "name": "rbln-cluster-policy"
           },
           "spec": {
+            "containerToolkit": {
+              "enabled": true,
+              "image": "rebellions/rbln-container-toolkit",
+              "imagePullPolicy": "Always",
+              "registry": "harbor.k8s.rebellions.in",
+              "version": "latest"
+            },
             "daemonsets": {},
             "devicePlugin": {
               "enabled": true,
+              "hostBinPath": "/run/rbln/driver/usr/bin",
               "image": "rebellions/k8s-device-plugin",
               "imagePullPolicy": "IfNotPresent",
+              "registry": "harbor.k8s.rebellions.in",
               "resourceList": [
                 {
                   "productCardNames": [
@@ -29,26 +88,28 @@ metadata:
                   "resourcePrefix": "rebellions.ai"
                 }
               ],
-              "version": "latest"
+              "version": "driver-test"
             },
             "metricsExporter": {
               "enabled": true,
               "image": "rebellions/rbln-metrics-exporter",
               "imagePullPolicy": "IfNotPresent",
-              "version": "latest"
+              "registry": "harbor.k8s.rebellions.in",
+              "version": "power-test"
             },
             "name": "rbln",
             "npuFeatureDiscovery": {
               "enabled": true,
               "image": "rebellions/rbln-npu-feature-discovery",
               "imagePullPolicy": "IfNotPresent",
-              "version": "latest"
+              "registry": "docker.io",
+              "version": "v0.2.0"
             },
             "sandboxDevicePlugin": {
-              "enabled": true,
+              "enabled": false,
               "image": "rebellions/k8s-device-plugin",
               "imagePullPolicy": "IfNotPresent",
-              "priorityClassName": "system-node-critical",
+              "registry": "docker.io",
               "resourceList": [
                 {
                   "productCardNames": [
@@ -59,25 +120,32 @@ metadata:
                   "resourcePrefix": "rebellions.ai"
                 }
               ],
-              "version": "latest",
+              "version": "v0.3.6",
               "vfioChecker": {
                 "image": "rebellions/rbln-vfio-manager",
                 "version": "latest"
               }
             },
+            "validator": {
+              "image": "rebellions/rbln-npu-operator-validator",
+              "imagePullPolicy": "Always",
+              "registry": "harbor.k8s.rebellions.in",
+              "version": "driver-test"
+            },
             "vfioManager": {
-              "enabled": true,
+              "enabled": false,
               "image": "rebellions/rbln-vfio-manager",
               "imagePullPolicy": "IfNotPresent",
-              "priorityClassName": "system-node-critical",
+              "registry": "docker.io",
               "version": "latest"
-            }
+            },
+            "workloadType": "container"
           }
         }
       ]
     capabilities: Basic Install
     containerImage: docker.io/rebellions/rbln-npu-operator:latest
-    createdAt: "2026-01-09T02:37:32Z"
+    createdAt: "2026-02-05T04:33:24Z"
     description: Deploy and manage Rebellions NPU in Kubernetes
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"
@@ -122,6 +190,86 @@ spec:
         name: rbac.authorization.k8s.io
         version: v1
       specDescriptors:
+      - description: ContainerToolkit component spec
+        displayName: Container Toolkit
+        path: containerToolkit
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Affinity specifies the affinity for the DaemonSet pods
+        displayName: Affinity
+        path: containerToolkit.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Affinity
+      - description: Annotations specifies the annotations for the DaemonSet pods
+        displayName: Annotations
+        path: containerToolkit.annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: List of arguments'
+        displayName: Arguments
+        path: containerToolkit.args
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: Enabled indicates if deployment of RBLN container toolkit is
+          enabled
+        displayName: Enable RBLN Container Toolkit deployment
+        path: containerToolkit.enabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: 'Optional: List of environment variables'
+        displayName: Environment Variables
+        path: containerToolkit.env
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: RBLN Container Toolkit image name
+        displayName: Image
+        path: containerToolkit.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: ImagePullPolicy specifies the image pull policy for the DaemonSet
+          pods
+        displayName: Image Pull Policy
+        path: containerToolkit.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: ImagePullSecrets specifies the image pull secrets for the DaemonSet
+          pods
+        displayName: Image pull secrets
+        path: containerToolkit.imagePullSecrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Labels specifies the labels for the DaemonSet pods
+        displayName: Labels
+        path: containerToolkit.labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: PriorityClassName specifies the priority class for the DaemonSet
+          pods
+        displayName: PriorityClassName
+        path: containerToolkit.priorityClassName
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN Container Toolkit image
+        displayName: Registry
+        path: containerToolkit.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Resources specifies the resource requirements for the DaemonSet
+          pods
+        displayName: Resource Requirements
+        path: containerToolkit.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - description: Tolerations specifies the tolerations for the DaemonSet pods
+        displayName: Tolerations
+        path: containerToolkit.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Tolerations
+      - description: RBLN Container Toolkit image tag
+        displayName: Version
+        path: containerToolkit.version
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: DaemonSets is common spec of rbln daemonset components
         displayName: Daemonsets
         path: daemonsets
@@ -398,6 +546,91 @@ spec:
         path: npuFeatureDiscovery.version
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: RBLN Daemon component spec
+        displayName: RBLN Daemon
+        path: rblnDaemon
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: Affinity specifies the affinity for the DaemonSet pods
+        displayName: Affinity
+        path: rblnDaemon.affinity
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Affinity
+      - description: Annotations specifies the annotations for the DaemonSet pods
+        displayName: Annotations
+        path: rblnDaemon.annotations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: List of arguments'
+        displayName: Arguments
+        path: rblnDaemon.args
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: Enabled indicates if deployment of RBLN daemon is enabled
+        displayName: Enable RBLN Daemon deployment
+        path: rblnDaemon.enabled
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: 'Optional: List of environment variables'
+        displayName: Environment Variables
+        path: rblnDaemon.env
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'HostPort represents host port that needs to be bound for rbln-daemon
+          (Default: 50051)'
+        displayName: Host port to bind for rbln-daemon
+        path: rblnDaemon.hostPort
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: RBLN Daemon image name
+        displayName: Image
+        path: rblnDaemon.image
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: ImagePullPolicy specifies the image pull policy for the DaemonSet
+          pods
+        displayName: Image Pull Policy
+        path: rblnDaemon.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: ImagePullSecrets specifies the image pull secrets for the DaemonSet
+          pods
+        displayName: Image pull secrets
+        path: rblnDaemon.imagePullSecrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Labels specifies the labels for the DaemonSet pods
+        displayName: Labels
+        path: rblnDaemon.labels
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: PriorityClassName specifies the priority class for the DaemonSet
+          pods
+        displayName: PriorityClassName
+        path: rblnDaemon.priorityClassName
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Registry override for the RBLN Daemon image
+        displayName: Registry
+        path: rblnDaemon.registry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Resources specifies the resource requirements for the DaemonSet
+          pods
+        displayName: Resource Requirements
+        path: rblnDaemon.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - description: Tolerations specifies the tolerations for the DaemonSet pods
+        displayName: Tolerations
+        path: rblnDaemon.tolerations
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:io.kubernetes:Tolerations
+      - description: RBLN Daemon image tag
+        displayName: Version
+        path: rblnDaemon.version
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
       - description: SandboxDevicePlugin component spec
         displayName: Sandbox Device Plugin
         path: sandboxDevicePlugin
@@ -504,6 +737,36 @@ spec:
         path: sandboxDevicePlugin.vfioChecker.version
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Validator defines the spec for operator-validator daemonset
+        displayName: Validator
+        path: validator
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced
+      - description: 'Optional: List of arguments'
+        displayName: Arguments
+        path: validator.args
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: List of environment variables'
+        displayName: Environment Variables
+        path: validator.env
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:text
+      - description: Image pull policy
+        displayName: Image Pull Policy
+        path: validator.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      - description: Image pull secrets
+        displayName: Image pull secrets
+        path: validator.imagePullSecrets
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: 'Optional: Define resources requests and limits for each pod'
+        displayName: Resource Requirements
+        path: validator.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:advanced,urn:alm:descriptor:com.tectonic.ui:resourceRequirements
       - description: VFIOManager component spec
         displayName: VFIO Manager
         path: vfioManager
@@ -591,6 +854,17 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.conditions
       version: v1beta1
+    - description: RBLNDriver is the Schema for the rblndrivers API
+      displayName: RBLNDriver
+      kind: RBLNDriver
+      name: rblndrivers.rebellions.ai
+      specDescriptors:
+      - description: Image pull policy
+        displayName: Image Pull Policy
+        path: manager.imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+      version: v1alpha1
   description: RBLN Operator automates the deployment and management of RBLN NPU drivers,
     device plugins, CRDs, firmware updates, and health monitoring for seamless integration
     into Kubernetes.
@@ -619,6 +893,19 @@ spec:
           - update
           - watch
         - apiGroups:
+          - ""
+          resources:
+          - nodes
+          - serviceaccounts
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - apps
           resources:
           - daemonsets
@@ -638,6 +925,19 @@ spec:
           verbs:
           - get
           - list
+          - watch
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          - clusterroles
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
           - watch
         - apiGroups:
           - rbac.authorization.k8s.io
@@ -674,6 +974,32 @@ spec:
           - rebellions.ai
           resources:
           - rblnclusterpolicies/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - rebellions.ai
+          resources:
+          - rblndrivers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - rebellions.ai
+          resources:
+          - rblndrivers/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - rebellions.ai
+          resources:
+          - rblndrivers/status
           verbs:
           - get
           - patch
@@ -752,8 +1078,8 @@ spec:
                   value: docker.io/rebellions/rbln-npu-feature-discovery@sha256:02ea11356b04e05d2dbbdd7b60286aec239e846e4beb26fdf515f61535b3e885
                 - name: RELATED_IMAGE_VFIO_MANAGER
                   value: docker.io/rebellions/rbln-vfio-manager@sha256:c9abcf882ddceb17a0f6b65463de1d4232d5d773994ff75e0aa2beef4c8ce87d
-                image: docker.io/rebellions/rbln-npu-operator:latest
-                imagePullPolicy: IfNotPresent
+                image: harbor.k8s.rebellions.in/rebellions/rbln-npu-operator:driver-test
+                imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
                     path: /healthz

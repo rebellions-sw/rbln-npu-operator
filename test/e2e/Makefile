@@ -2,11 +2,15 @@ GO_CMD ?= go
 
 OPERATOR_REGISTRY ?= docker.io
 OPERATOR_REPOSITORY ?= rebellions/rbln-npu-operator
+VALIDATOR_REGISTRY ?= docker.io
+VALIDATOR_REPOSITORY ?= rebellions/rbln-npu-operator-validator
 
 HELM_CHART ?= $(CURDIR)/../../deployments/rbln-npu-operator
 KUBE_CONTEXT ?=
 PYPI_USERNAME ?=
 PYPI_PASSWORD ?=
+REGISTRY_USER ?= $(E2E_CONTAINER_REGISTRY_USER)
+REGISTRY_PASSWORD ?= $(E2E_CONTAINER_REGISTRY_PASSWORD)
 
 .PHONY: e2e-test
 e2e-test:
@@ -26,4 +30,8 @@ e2e-test:
 		-operator-version=$(OPERATOR_VERSION) \
 		-helm-chart=$(HELM_CHART) \
 		-pypi-username=$(PYPI_USERNAME) \
-		-pypi-password=$(PYPI_PASSWORD)
+		-pypi-password=$(PYPI_PASSWORD) \
+		-registry-user=$(REGISTRY_USER) \
+		-registry-password=$(REGISTRY_PASSWORD) \
+		-validator-registry=$(VALIDATOR_REGISTRY) \
+		-validator-repository=$(VALIDATOR_REPOSITORY)

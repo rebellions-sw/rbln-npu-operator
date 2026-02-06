@@ -5,12 +5,16 @@ metadata:
     app.kubernetes.io/name: rbln-npu-operator
   name: rbln-cluster-policy
 spec:
+  name: rbln
+  workloadType: container
   daemonsets: {}
   devicePlugin:
     enabled: true
+    registry: docker.io
     image: rebellions/k8s-device-plugin
-    imagePullPolicy: IfNotPresent
     version: latest
+    imagePullPolicy: IfNotPresent
+    hostBinPath: /run/rbln/driver/usr/bin
     resourceList:
       - resourceName: ATOM
         resourcePrefix: rebellions.ai
@@ -19,24 +23,38 @@ spec:
           - RBLN-CA25
   metricsExporter:
     enabled: true
+    registry: docker.io
     image: rebellions/rbln-metrics-exporter
-    imagePullPolicy: IfNotPresent
     version: latest
-  name: rbln
+    imagePullPolicy: IfNotPresent
   npuFeatureDiscovery:
     enabled: true
+    registry: docker.io
     image: rebellions/rbln-npu-feature-discovery
-    imagePullPolicy: IfNotPresent
     version: latest
-  sandboxDevicePlugin:
+    imagePullPolicy: IfNotPresent
+  containerToolkit:
     enabled: true
-    image: rebellions/k8s-device-plugin
-    imagePullPolicy: IfNotPresent
-    priorityClassName: system-node-critical
+    registry: docker.io
+    image: rebellions/rbln-container-toolkit
     version: latest
+    imagePullPolicy: IfNotPresent
+  rblnDaemon:
+    enabled: true
+    registry: repo.rebellions.ai
+    image: rebellions/rbln-daemon
+    version: 3.0.0
+    imagePullPolicy: IfNotPresent
+    hostPort: 50051
+  sandboxDevicePlugin:
+    enabled: false
+    registry: docker.io
+    image: rebellions/k8s-device-plugin
+    version: latest
+    imagePullPolicy: IfNotPresent
     vfioChecker:
       image: rebellions/rbln-vfio-manager
-      version: "latest"
+      version: latest
     resourceList:
       - resourceName: ATOM_PT
         resourcePrefix: rebellions.ai
@@ -44,8 +62,13 @@ spec:
           - RBLN-CA22
           - RBLN-CA25
   vfioManager:
-    enabled: true
+    enabled: false
+    registry: docker.io
     image: rebellions/rbln-vfio-manager
+    version: latest
     imagePullPolicy: IfNotPresent
-    priorityClassName: system-node-critical
-    version: "latest"
+  validator:
+    registry: docker.io
+    image: rebellions/rbln-npu-operator-validator
+    version: latest
+    imagePullPolicy: IfNotPresent

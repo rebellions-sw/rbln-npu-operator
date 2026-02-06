@@ -329,6 +329,26 @@ func (h *sandboxDevicePluginPatcher) handleConfigMap(ctx context.Context, cp *rb
 func (h *sandboxDevicePluginPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1beta1.RBLNClusterPolicy) error {
 	builder := k8sutil.NewDaemonSetBuilder(h.name, h.namespace)
 	ds := builder.Build()
+	validatorSpec := owner.Spec.Validator
+	driverReady := k8sutil.NewContainerBuilder().
+		WithName("driver-ready").
+		WithImage(ComposeImageReference(validatorSpec.Registry, validatorSpec.Image), validatorSpec.Version, validatorSpec.ImagePullPolicy).
+		WithCommands([]string{"sh", "-c"}).
+		WithArgs([]string{"until [ -f " + validationsMountPath + "/.driver-ctr-ready ]; do echo waiting for rbln driver container to be ready; sleep 5; done"}).
+		WithSecurityContext(&corev1.SecurityContext{
+			Privileged: ptr(true),
+		}).
+		WithVolumeMounts([]corev1.VolumeMount{
+			{
+				Name:             validationsVolumeName,
+				MountPath:        validationsMountPath,
+				MountPropagation: ptr(corev1.MountPropagationHostToContainer),
+			},
+		}).
+		Build()
+	if validatorSpec.ImagePullPolicy == "" {
+		driverReady.ImagePullPolicy = corev1.PullIfNotPresent
+	}
 	dsRes, err := controllerutil.CreateOrPatch(ctx, h.client, ds, func() error {
 		ds = builder.
 			WithLabelSelectors(map[string]string{"app": h.name}).
@@ -341,6 +361,15 @@ func (h *sandboxDevicePluginPatcher) handleDaemonSet(ctx context.Context, owner 
 				WithTolerations(h.desiredSpec.Tolerations).
 				WithImagePullSecrets(h.desiredSpec.ImagePullSecrets).
 				WithVolumes([]corev1.Volume{
+					{
+						Name: validationsVolumeName,
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: validationsMountPath,
+								Type: ptr(corev1.HostPathDirectoryOrCreate),
+							},
+						},
+					},
 					{
 						Name: "devicesock",
 						VolumeSource: corev1.VolumeSource{
@@ -403,6 +432,7 @@ func (h *sandboxDevicePluginPatcher) handleDaemonSet(ctx context.Context, owner 
 					},
 				}).
 				WithInitContainers([]*corev1.Container{
+					driverReady,
 					k8sutil.NewContainerBuilder().
 						WithName("vfio-bind-checker").
 						WithImage(ComposeImageReference(h.desiredSpec.VFIOChecker.Registry, h.desiredSpec.VFIOChecker.Image), h.desiredSpec.VFIOChecker.Version, h.desiredSpec.ImagePullPolicy).

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/apps/v1"
@@ -23,9 +22,12 @@ import (
 )
 
 const (
-	defaultHostBinPath = "/usr/bin"
-	hostBinVolumeName  = "host-bin"
-	rblnSMIBinaryName  = "rbln-smi"
+	hostUsrBinVolumeName      = "host-usr-bin"
+	hostUsrBinPath            = "/usr/bin"
+	hostUsrBinMountPath       = "/host/usr/bin"
+	hostDriverUsrBinPath      = "/run/rbln/driver/usr/bin"
+	hostDriverUsrBinName      = "host-driver-usr-bin"
+	hostDriverUsrBinMountPath = "/host/driver/usr/bin"
 )
 
 type devicePluginPatcher struct {
@@ -201,13 +203,6 @@ func (h *devicePluginPatcher) ComponentNamespace() string {
 	return h.namespace
 }
 
-func (h *devicePluginPatcher) getHostBinPath() string {
-	if h.desiredSpec != nil && h.desiredSpec.HostBinPath != "" {
-		return h.desiredSpec.HostBinPath
-	}
-	return defaultHostBinPath
-}
-
 func (h *devicePluginPatcher) handleServiceAccount(ctx context.Context, owner *rblnv1beta1.RBLNClusterPolicy) error {
 	builder := k8sutil.NewServiceAccountBuilder(h.name, h.namespace)
 	sa := builder.Build()
@@ -338,9 +333,28 @@ func (h *devicePluginPatcher) handleConfigMap(ctx context.Context, cp *rblnv1bet
 }
 
 func (h *devicePluginPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1beta1.RBLNClusterPolicy) error {
-	hostRblnSMIPath := filepath.Join(h.getHostBinPath(), rblnSMIBinaryName)
 	builder := k8sutil.NewDaemonSetBuilder(h.name, h.namespace)
 	ds := builder.Build()
+	validatorSpec := owner.Spec.Validator
+	initContainer := k8sutil.NewContainerBuilder().
+		WithName("toolkit-validation").
+		WithImage(ComposeImageReference(validatorSpec.Registry, validatorSpec.Image), validatorSpec.Version, validatorSpec.ImagePullPolicy).
+		WithCommands([]string{"sh", "-c"}).
+		WithArgs([]string{"until [ -f /run/rbln/validations/toolkit-ready ]; do echo waiting for rbln container stack to be setup; sleep 5; done"}).
+		WithSecurityContext(&corev1.SecurityContext{
+			Privileged: ptr(true),
+		}).
+		WithVolumeMounts([]corev1.VolumeMount{
+			{
+				Name:             validationsVolumeName,
+				MountPath:        validationsMountPath,
+				MountPropagation: ptr(corev1.MountPropagationHostToContainer),
+			},
+		}).
+		Build()
+	if validatorSpec.ImagePullPolicy == "" {
+		initContainer.ImagePullPolicy = corev1.PullIfNotPresent
+	}
 	dsRes, err := controllerutil.CreateOrPatch(ctx, h.client, ds, func() error {
 		ds = builder.
 			WithLabelSelectors(map[string]string{"app": h.name}).
@@ -353,6 +367,15 @@ func (h *devicePluginPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1
 				WithTolerations(h.desiredSpec.Tolerations).
 				WithImagePullSecrets(h.desiredSpec.ImagePullSecrets).
 				WithVolumes([]corev1.Volume{
+					{
+						Name: validationsVolumeName,
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: validationsMountPath,
+								Type: ptr(corev1.HostPathDirectoryOrCreate),
+							},
+						},
+					},
 					{
 						Name: "devicesock",
 						VolumeSource: corev1.VolumeSource{
@@ -421,15 +444,25 @@ func (h *devicePluginPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1
 						},
 					},
 					{
-						Name: hostBinVolumeName,
+						Name: hostUsrBinVolumeName,
 						VolumeSource: corev1.VolumeSource{
 							HostPath: &corev1.HostPathVolumeSource{
-								Path: h.getHostBinPath(),
+								Path: hostUsrBinPath,
 								Type: ptr(corev1.HostPathDirectory),
 							},
 						},
 					},
+					{
+						Name: hostDriverUsrBinName,
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: hostDriverUsrBinPath,
+								Type: ptr(corev1.HostPathDirectoryOrCreate),
+							},
+						},
+					},
 				}).
+				WithInitContainers([]*corev1.Container{initContainer}).
 				WithContainers([]*corev1.Container{
 					k8sutil.NewContainerBuilder().
 						WithName(h.name).
@@ -459,9 +492,13 @@ func (h *devicePluginPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1
 								MountPath: "/etc/pcidp",
 							},
 							{
-								Name:      hostBinVolumeName,
-								MountPath: hostRblnSMIPath,
-								SubPath:   rblnSMIBinaryName,
+								Name:      hostUsrBinVolumeName,
+								MountPath: hostUsrBinMountPath,
+								ReadOnly:  true,
+							},
+							{
+								Name:      hostDriverUsrBinName,
+								MountPath: hostDriverUsrBinMountPath,
 								ReadOnly:  true,
 							},
 							{

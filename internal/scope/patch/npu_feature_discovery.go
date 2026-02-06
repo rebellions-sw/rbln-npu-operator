@@ -249,6 +249,24 @@ func (h *npuFeatureDiscoveryPatcher) handleRoleBinding(ctx context.Context, owne
 func (h *npuFeatureDiscoveryPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1beta1.RBLNClusterPolicy) error {
 	builder := k8sutil.NewDaemonSetBuilder(h.name, h.namespace)
 	ds := builder.Build()
+	validatorSpec := owner.Spec.Validator
+	initContainer := k8sutil.NewContainerBuilder().
+		WithName("toolkit-validation").
+		WithImage(ComposeImageReference(validatorSpec.Registry, validatorSpec.Image), validatorSpec.Version, validatorSpec.ImagePullPolicy).
+		WithCommands([]string{"sh", "-c"}).
+		WithArgs([]string{"until [ -f " + validationsMountPath + "/toolkit-ready ]; do echo waiting for rbln container stack to be setup; sleep 5; done"}).
+		WithSecurityContext(&corev1.SecurityContext{
+			Privileged: ptr(true),
+		}).
+		WithVolumeMounts([]corev1.VolumeMount{
+			{
+				Name:             validationsVolumeName,
+				MountPath:        validationsMountPath,
+				MountPropagation: ptr(corev1.MountPropagationHostToContainer),
+			},
+		}).
+		Build()
+
 	dsRes, err := controllerutil.CreateOrPatch(ctx, h.client, ds, func() error {
 		ds = builder.
 			WithLabelSelectors(map[string]string{"app": h.name}).
@@ -262,6 +280,15 @@ func (h *npuFeatureDiscoveryPatcher) handleDaemonSet(ctx context.Context, owner 
 				WithImagePullSecrets(h.desiredSpec.ImagePullSecrets).
 				WithVolumes([]corev1.Volume{
 					{
+						Name: validationsVolumeName,
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: validationsMountPath,
+								Type: ptr(corev1.HostPathDirectoryOrCreate),
+							},
+						},
+					},
+					{
 						Name: "features-dir",
 						VolumeSource: corev1.VolumeSource{
 							HostPath: &corev1.HostPathVolumeSource{
@@ -270,6 +297,7 @@ func (h *npuFeatureDiscoveryPatcher) handleDaemonSet(ctx context.Context, owner 
 						},
 					},
 				}).
+				WithInitContainers([]*corev1.Container{initContainer}).
 				WithTerminationGracePeriodSeconds(0).
 				WithContainers([]*corev1.Container{
 					k8sutil.NewContainerBuilder().
