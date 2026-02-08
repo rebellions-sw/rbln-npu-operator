@@ -18,6 +18,7 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -25,8 +26,10 @@ import (
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
+	kapierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	e2ek8s "github.com/rebellions-sw/rbln-npu-operator/test/e2e/kubernetes"
 	e2elog "github.com/rebellions-sw/rbln-npu-operator/test/e2e/logs"
@@ -40,6 +43,8 @@ const (
 	devicePluginNodeLabelKey   = "rebellions.ai/npu.deploy.device-plugin"
 	devicePluginNodeLabelValue = "true"
 	rblnClusterPolicyCRDName   = "rblnclusterpolicies.rebellions.ai"
+	registryServer             = "repo.rebellions.ai"
+	registrySecretName         = "drivercred"
 )
 
 var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
@@ -76,6 +81,19 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 					Fail(fmt.Sprintf("failed to create gpu operator namespace %s: %v", e2eCfg.namespace, err))
 				}
 
+				if e2eCfg.registryUser == "" || e2eCfg.registryPassword == "" {
+					Fail("registry credentials are required: set E2E_CONTAINER_REGISTRY_USER and E2E_CONTAINER_REGISTRY_PASSWORD")
+				}
+				if err := ensureRegistrySecret(
+					ctx,
+					te.ClientSet.CoreV1(),
+					testNamespace.Name,
+					e2eCfg.registryUser,
+					e2eCfg.registryPassword,
+				); err != nil {
+					Fail(fmt.Sprintf("failed to create registry secret %s: %v", registrySecretName, err))
+				}
+
 				helmClient, err = NewHelmClient(
 					testNamespace.Name,
 					testenv.TestCtx.KubeConfig,
@@ -98,6 +116,9 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 								"tag":        e2eCfg.operatorVersion,
 							},
 						},
+						"driver": map[string]interface{}{
+							"imagePullSecrets": []string{registrySecretName},
+						},
 						"devicePlugin": map[string]interface{}{
 							"image": map[string]interface{}{
 								"pullPolicy": "Always",
@@ -107,6 +128,14 @@ var _ = Describe("e2e-npu-operator-scenario-test", Ordered, func() {
 							"image": map[string]interface{}{
 								"pullPolicy": "Always",
 							},
+						},
+						"rblnDaemon": map[string]interface{}{
+							"imagePullSecrets": []string{registrySecretName},
+						},
+						"validator": map[string]interface{}{
+							"registry": e2eCfg.validatorRegistry,
+							"image":    e2eCfg.validatorRepository,
+							"tag":      e2eCfg.operatorVersion,
 						},
 						"npuFeatureDiscovery": map[string]interface{}{
 							"image": map[string]interface{}{
@@ -320,3 +349,64 @@ python inference.py`
 		})
 	})
 })
+
+type dockerAuthConfig struct {
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+	Email    string `json:"email,omitempty"`
+}
+
+type dockerConfig struct {
+	Auths map[string]dockerAuthConfig `json:"auths"`
+}
+
+func buildDockerConfigJSON(username, password, email string) ([]byte, error) {
+	config := dockerConfig{
+		Auths: map[string]dockerAuthConfig{
+			registryServer: {
+				Username: username,
+				Password: password,
+				Email:    email,
+			},
+		},
+	}
+	return json.Marshal(config)
+}
+
+func ensureRegistrySecret(
+	ctx context.Context,
+	client corev1client.CoreV1Interface,
+	namespace string,
+	username string,
+	password string,
+) error {
+	configJSON, err := buildDockerConfigJSON(username, password, "devops@rebellions.ai")
+	if err != nil {
+		return err
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      registrySecretName,
+			Namespace: namespace,
+		},
+		Type: corev1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{
+			corev1.DockerConfigJsonKey: configJSON,
+		},
+	}
+
+	if _, err := client.Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{}); err == nil {
+		return nil
+	} else if !kapierrors.IsAlreadyExists(err) {
+		return err
+	}
+
+	existing, err := client.Secrets(namespace).Get(ctx, registrySecretName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	secret.ResourceVersion = existing.ResourceVersion
+	_, err = client.Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+	return err
+}

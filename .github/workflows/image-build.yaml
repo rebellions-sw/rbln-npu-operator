@@ -8,6 +8,11 @@ on:
         required: false
         default: 'false'
         type: string
+      image-tag:
+        description: "Image tag to use instead of short SHA (optional)"
+        required: false
+        default: ''
+        type: string
     outputs:
       operator-version:
         description: "Short commit SHA used for the operator image tag"
@@ -30,7 +35,12 @@ jobs:
         id: build_vars
         run: |
           COMMIT_SHORT_SHA=${GITHUB_SHA:0:8}
-          IMAGE_TAG="${COMMIT_SHORT_SHA}-amd64"
+          INPUT_TAG="${{ inputs.image-tag }}"
+          if [ -n "${INPUT_TAG}" ]; then
+            IMAGE_TAG="${INPUT_TAG}"
+          else
+            IMAGE_TAG="${COMMIT_SHORT_SHA}-amd64"
+          fi
           echo "COMMIT_SHORT_SHA=${COMMIT_SHORT_SHA}" >> $GITHUB_ENV
           echo "PUSH_ON_BUILD=${{ inputs.push-on-build }}" >> $GITHUB_ENV
           {
@@ -49,3 +59,8 @@ jobs:
           VERSION: ${{ steps.build_vars.outputs.image_tag }}
           PUSH_ON_BUILD: ${{ env.PUSH_ON_BUILD }}
         run: make build-image
+      - name: Build validator image
+        env:
+          VERSION: ${{ steps.build_vars.outputs.image_tag }}
+          PUSH_ON_BUILD: ${{ env.PUSH_ON_BUILD }}
+        run: make build-image IMAGE_NAME=docker.io/rebellions/rbln-npu-operator-validator

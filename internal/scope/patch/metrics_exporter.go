@@ -301,6 +301,26 @@ func (h *metricsExporterPatcher) handleDaemonSet(ctx context.Context, owner *rbl
 	labelsMap := map[string]string{
 		"app": h.name,
 	}
+	validatorSpec := owner.Spec.Validator
+	initContainer := k8sutil.NewContainerBuilder().
+		WithName("toolkit-validation").
+		WithImage(ComposeImageReference(validatorSpec.Registry, validatorSpec.Image), validatorSpec.Version, validatorSpec.ImagePullPolicy).
+		WithCommands([]string{"sh", "-c"}).
+		WithArgs([]string{"until [ -f " + validationsMountPath + "/toolkit-ready ]; do echo waiting for rbln container stack to be setup; sleep 5; done"}).
+		WithSecurityContext(&corev1.SecurityContext{
+			Privileged: ptr(true),
+		}).
+		WithVolumeMounts([]corev1.VolumeMount{
+			{
+				Name:             validationsVolumeName,
+				MountPath:        validationsMountPath,
+				MountPropagation: ptr(corev1.MountPropagationHostToContainer),
+			},
+		}).
+		Build()
+	if validatorSpec.ImagePullPolicy == "" {
+		initContainer.ImagePullPolicy = corev1.PullIfNotPresent
+	}
 	dsRes, err := controllerutil.CreateOrPatch(ctx, h.client, ds, func() error {
 		ds = builder.
 			WithLabelSelectors(labelsMap).
@@ -314,6 +334,15 @@ func (h *metricsExporterPatcher) handleDaemonSet(ctx context.Context, owner *rbl
 					WithTolerations(h.desiredSpec.Tolerations).
 					WithImagePullSecrets(h.desiredSpec.ImagePullSecrets).
 					WithVolumes([]corev1.Volume{
+						{
+							Name: validationsVolumeName,
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: validationsMountPath,
+									Type: ptr(corev1.HostPathDirectoryOrCreate),
+								},
+							},
+						},
 						{
 							Name: "pod-resources",
 							VolumeSource: corev1.VolumeSource{
@@ -333,6 +362,7 @@ func (h *metricsExporterPatcher) handleDaemonSet(ctx context.Context, owner *rbl
 							},
 						},
 					}).
+					WithInitContainers([]*corev1.Container{initContainer}).
 					WithContainers([]*corev1.Container{
 						k8sutil.NewContainerBuilder().
 							WithName(h.name).

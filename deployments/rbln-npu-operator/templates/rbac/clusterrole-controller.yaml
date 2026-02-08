@@ -46,6 +46,19 @@ rules:
   - apiGroups:
     - rbac.authorization.k8s.io
     resources:
+    - clusterrolebindings
+    - clusterroles
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+  - apiGroups:
+    - rbac.authorization.k8s.io
+    resources:
     - rolebindings
     - roles
     verbs:
@@ -68,6 +81,32 @@ rules:
     - patch
     - update
     - watch
+  - apiGroups:
+    - rebellions.ai
+    resources:
+    - rblndrivers
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+  - apiGroups:
+    - rebellions.ai
+    resources:
+    - rblndrivers/finalizers
+    verbs:
+    - update
+  - apiGroups:
+    - rebellions.ai
+    resources:
+    - rblndrivers/status
+    verbs:
+    - get
+    - patch
+    - update
   - apiGroups:
     - rebellions.ai
     resources:

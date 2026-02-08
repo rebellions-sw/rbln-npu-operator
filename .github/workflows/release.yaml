@@ -33,6 +33,13 @@ jobs:
           PUSH_ON_BUILD: "true"
           BUILD_MULTI_PLATFORM: "false" # TODO(mskim): revert when dedicated ARM runners become available
         run: make build-image
+      - name: Build and push validator image
+        env:
+          VERSION: ${{ github.ref_name }}
+          REGISTRY: docker.io/rebellions
+          PUSH_ON_BUILD: "true"
+          BUILD_MULTI_PLATFORM: "false" # TODO(mskim): revert when dedicated ARM runners become available
+        run: make build-image IMAGE_NAME="${REGISTRY}/rbln-npu-operator-validator"
 
   package-helm-chart:
     name: Package Helm chart

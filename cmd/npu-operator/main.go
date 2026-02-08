@@ -36,6 +36,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	rebellionsaiv1alpha1 "github.com/rebellions-sw/rbln-npu-operator/api/v1alpha1"
 	rblnv1beta1 "github.com/rebellions-sw/rbln-npu-operator/api/v1beta1"
 	"github.com/rebellions-sw/rbln-npu-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
@@ -50,6 +51,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(rblnv1beta1.AddToScheme(scheme))
+	utilruntime.Must(rebellionsaiv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -160,6 +162,15 @@ func main() {
 		ClusterInfo: clusterInfo,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RBLNClusterPolicy")
+		os.Exit(1)
+	}
+	if err = (&controller.RBLNDriverReconciler{
+		Client:      mgr.GetClient(),
+		Log:         ctrl.Log.WithName("controllers").WithName("RBLNDriver"),
+		Scheme:      mgr.GetScheme(),
+		ClusterInfo: clusterInfo,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "RBLNDriver")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

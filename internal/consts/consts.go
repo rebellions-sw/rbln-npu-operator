@@ -18,6 +18,13 @@ const (
 	NFDLabelPrefix                  = "feature.node.kubernetes.io/"
 )
 
+// Container runtimes
+const (
+	Containerd = "containerd"
+	Docker     = "docker"
+	CRIO       = "crio"
+)
+
 // Condition types
 const (
 	RBLNConditionTypeReady           = "Ready"
@@ -46,9 +53,24 @@ const (
 	RBLNMetricExporterName = "metrics-exporter"
 )
 
+// RBLN daemon constants
+const (
+	RBLNDaemonName = "rbln-daemon"
+)
+
 // NPU feature discovery constants
 const (
 	RBLNFeatureDiscoveryName = "npu-feature-discovery"
+)
+
+// Container toolkit constants
+const (
+	RBLNContainerToolkitName = "container-toolkit"
+)
+
+// Validator constants
+const (
+	RBLNValidatorName = "operator-validator"
 )
 
 // VFIO constants

@@ -1,0 +1,75 @@
+{{- if .Values.driver.enabled }}
+apiVersion: rebellions.ai/v1alpha1
+kind: RBLNDriver
+metadata:
+  labels:
+    {{- include "rbln-npu-operator.labels" . | nindent 4 }}
+  name: rbln-driver
+spec:
+  registry: {{ .Values.driver.image.registry }}
+  image: {{ .Values.driver.image.repository }}
+  version: {{ .Values.driver.image.tag | quote }}
+  imagePullPolicy: {{ .Values.driver.image.pullPolicy }}
+  {{- with .Values.driver.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.nodeSelector }}
+  nodeSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.nodeAffinity }}
+  nodeAffinity:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.tolerations }}
+  tolerations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.driver.priorityClassName }}
+  priorityClassName: {{ .Values.driver.priorityClassName | quote }}
+  {{- end }}
+  {{- with .Values.driver.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.args }}
+  args:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.env }}
+  env:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.driver.manager }}
+  manager:
+    {{- if .registry }}
+    registry: {{ .registry }}
+    {{- end }}
+    {{- if .image }}
+    image: {{ .image }}
+    {{- end }}
+    {{- if .version }}
+    version: {{ .version | quote }}
+    {{- end }}
+    {{- if .imagePullPolicy }}
+    imagePullPolicy: {{ .imagePullPolicy }}
+    {{- end }}
+    {{- with .imagePullSecrets }}
+    imagePullSecrets:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .env }}
+    env:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

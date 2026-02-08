@@ -93,5 +93,31 @@ jobs:
           OPERATOR_VERSION: ${{ needs.image-build.outputs.operator-image-tag }}
           PYPI_USERNAME: ${{ secrets.E2E_PYPI_USERNAME }}
           PYPI_PASSWORD: ${{ secrets.E2E_PYPI_PASSWORD }}
+          E2E_CONTAINER_REGISTRY_USER: ${{ secrets.E2E_CONTAINER_REGISTRY_USER }}
+          E2E_CONTAINER_REGISTRY_PASSWORD: ${{ secrets.E2E_CONTAINER_REGISTRY_PASSWORD }}
+          VALIDATOR_REGISTRY: docker.io
+          VALIDATOR_REPOSITORY: rebellions/rbln-npu-operator-validator
+          VALIDATOR_VERSION: ${{ needs.image-build.outputs.operator-image-tag }}
         run: |
           make -C test/e2e e2e-test
+  cleanup-images:
+    needs: [image-build, e2e-tests]
+    if: always()
+    runs-on: ubuntu-latest-rbln
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: install regctl
+        run: |
+          export REGCTL_VERSION=v0.9.1
+          curl -sSL https://github.com/regclient/regclient/releases/download/${REGCTL_VERSION}/regctl-linux-amd64 -o /usr/local/bin/regctl
+          chmod +x /usr/local/bin/regctl
+      - name: Cleanup operator image tag
+        env:
+          OPERATOR_IMAGE_TAG: ${{ needs.image-build.outputs.operator-image-tag }}
+        run: |
+          regctl image delete "docker.io/rebellions/rbln-npu-operator:${OPERATOR_IMAGE_TAG}" || true
+          regctl image delete "docker.io/rebellions/rbln-npu-operator-validator:${OPERATOR_IMAGE_TAG}" || true

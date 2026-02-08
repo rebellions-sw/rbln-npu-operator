@@ -87,7 +87,7 @@ func (r *RBLNClusterPolicyReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// Initialize RBLNClusterPolicyScope
-	cpScope, err := scope.NewRBLNClusterPolicyScope(ctx, r.Client, r.Log, r.Scheme, instance, r.ClusterInfo.OpenshiftVersion)
+	cpScope, err := scope.NewRBLNClusterPolicyScope(ctx, r.Client, r.Log, r.Scheme, instance, r.ClusterInfo.OpenshiftVersion, r.ClusterInfo.ContainerRuntime)
 	if err != nil {
 		err = fmt.Errorf("failed to initialize RBLNClusterPolicy Scope: %v", err)
 		updateCRState(ctx, r, req.NamespacedName, rblnv1beta1.ClusterNotReady)

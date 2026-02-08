@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	kapierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -33,7 +34,14 @@ func (cc *CoreClient) CreateNamespace(
 		Status: corev1.NamespaceStatus{},
 	}
 
-	return cc.k8sClient.Namespaces().Create(ctx, namespaceObj, metav1.CreateOptions{})
+	created, err := cc.k8sClient.Namespaces().Create(ctx, namespaceObj, metav1.CreateOptions{})
+	if err == nil {
+		return created, nil
+	}
+	if !kapierrors.IsAlreadyExists(err) {
+		return nil, err
+	}
+	return cc.k8sClient.Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
 }
 
 func (cc *CoreClient) GetPodsByLabel(

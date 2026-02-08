@@ -71,6 +71,11 @@ func (b *PodSpecBuilder) WithHostNetwork(enabled bool) *PodSpecBuilder {
 	return b
 }
 
+func (b *PodSpecBuilder) WithHostPID(enabled bool) *PodSpecBuilder {
+	b.obj.HostPID = enabled
+	return b
+}
+
 func (b *PodSpecBuilder) WithTerminationGracePeriodSeconds(seconds int64) *PodSpecBuilder {
 	b.obj.TerminationGracePeriodSeconds = &[]int64{seconds}[0]
 	return b

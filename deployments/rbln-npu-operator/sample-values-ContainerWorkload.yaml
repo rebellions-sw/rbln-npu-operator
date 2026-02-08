@@ -77,6 +77,80 @@ operator:
   #   effect: NoSchedule
   tolerations: []
 
+# Driver configuration
+driver:
+  enabled: true
+  image:
+    registry: repo.rebellions.ai
+    repository: rebellions/rbln-driver
+    tag: "3.0.0"
+    pullPolicy: IfNotPresent
+  # Example:
+  # imagePullSecrets:
+  # - my-registry-secret
+  imagePullSecrets: []
+  # Example:
+  # nodeSelector:
+  #   rebellions.ai/npu.present: "true"
+  nodeSelector: {}
+  # Example:
+  # nodeAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     nodeSelectorTerms:
+  #     - matchExpressions:
+  #       - key: kubernetes.io/arch
+  #         operator: In
+  #         values:
+  #         - amd64
+  nodeAffinity: {}
+  # Example:
+  # tolerations:
+  # - key: node-role.kubernetes.io/control-plane
+  #   operator: Exists
+  #   effect: NoSchedule
+  tolerations: []
+  # Example:
+  # labels:
+  #   app.kubernetes.io/component: driver
+  labels: {}
+  # Example:
+  # annotations:
+  #   my-annotation: "true"
+  annotations: {}
+  # Example:
+  # priorityClassName: system-node-critical
+  priorityClassName: ""
+  # Example:
+  # resources:
+  #   requests:
+  #     cpu: 250m
+  #     memory: 64Mi
+  #   limits:
+  #     cpu: 500m
+  #     memory: 128Mi
+  resources: {}
+  # Example:
+  # args:
+  # - init
+  args: []
+  # Example:
+  # env:
+  # - name: RBLN_DRIVER_LOG_LEVEL
+  #   value: info
+  env: []
+  # Example:
+  # manager:
+  #   registry: harbor.k8s.rebellions.in
+  #   image: rebellions-sw/rbln-k8s-driver-manager
+  #   version: "3.0.0"
+  #   imagePullPolicy: IfNotPresent
+  #   imagePullSecrets:
+  #   - my-registry-secret
+  #   env:
+  #   - name: RBLN_MANAGER_LOG_LEVEL
+  #     value: info
+  manager: {}
+
 
 # NPU Device Plugin configuration
 devicePlugin:
@@ -105,6 +179,20 @@ metricsExporter:
     tag: latest
     pullPolicy: IfNotPresent
 
+# RBLN Daemon configuration
+rblnDaemon:
+  enabled: true
+  image:
+    registry: repo.rebellions.ai
+    repository: rebellions/rbln-daemon
+    tag: "3.0.0"
+    pullPolicy: IfNotPresent
+  hostPort: 50051
+  imagePullSecrets: []
+  resources: {}
+  args: []
+  env: []
+
 # NPU Feature Discovery configuration
 npuFeatureDiscovery:
   enabled: true
@@ -113,6 +201,19 @@ npuFeatureDiscovery:
     repository: rebellions/rbln-npu-feature-discovery
     tag: latest
     pullPolicy: IfNotPresent
+
+# Container Toolkit configuration
+containerToolkit:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: rebellions/rbln-container-toolkit
+    tag: latest
+    pullPolicy: IfNotPresent
+  imagePullSecrets: []
+  resources: {}
+  args: []
+  env: []
 
 # Sandbox Device Plugin for VM workloads
 sandboxDevicePlugin:
@@ -148,3 +249,22 @@ vfioManager:
     repository: rebellions/rbln-vfio-manager
     tag: latest
     pullPolicy: IfNotPresent
+
+# Validator configuration
+validator:
+  registry: docker.io
+  image: rebellions/rbln-npu-operator-validator
+  tag: latest
+  pullPolicy: IfNotPresent
+  imagePullSecrets: []
+  resources: {}
+  args: []
+  env: []
+  plugin:
+    env: []
+  toolkit:
+    env: []
+  driver:
+    env: []
+  vfioPCI:
+    env: []
