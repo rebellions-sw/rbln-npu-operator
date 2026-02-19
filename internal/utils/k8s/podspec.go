@@ -169,22 +169,22 @@ func MergeAffinity(defaultAffinity, userAffinity *corev1.Affinity) *corev1.Affin
 		// Merge RequiredDuringSchedulingIgnoredDuringExecution
 		if defaultAffinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
 			if merged.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
-				merged.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = defaultAffinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+				merged.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = defaultAffinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution
 			} else {
 				merged.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(
 					merged.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution,
-					defaultAffinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution...,
+					defaultAffinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution...,
 				)
 			}
 		}
 		// Merge PreferredDuringSchedulingIgnoredDuringExecution
 		if defaultAffinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution != nil {
 			if merged.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution == nil {
-				merged.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution = defaultAffinity.PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution
+				merged.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution = defaultAffinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution
 			} else {
 				merged.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution = append(
 					merged.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution,
-					defaultAffinity.PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution...,
+					defaultAffinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution...,
 				)
 			}
 		}

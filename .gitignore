@@ -36,3 +36,5 @@ preflight.log
 
 # Environment variables
 .env
+
+.vscode/*

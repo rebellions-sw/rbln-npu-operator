@@ -28,8 +28,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	rebellionsaiv1alpha1 "github.com/rebellions-sw/rbln-npu-operator/api/v1alpha1"
@@ -47,6 +50,13 @@ type RBLNDriverReconciler struct {
 	ClusterInfo           *ClusterInfo
 	nodeSelectorValidator validator.NodeSelectorValidator
 }
+
+const (
+	driverNodeDeployLabelKey = "rebellions.ai/npu.deploy.driver"
+	nfdOSReleaseIDLabelKey   = "feature.node.kubernetes.io/system-os_release.ID"
+	nfdOSVersionIDLabelKey   = "feature.node.kubernetes.io/system-os_release.VERSION_ID"
+	nfdKernelLabelKey        = "feature.node.kubernetes.io/kernel-version.full"
+)
 
 // +kubebuilder:rbac:groups=rebellions.ai,resources=rblndrivers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rebellions.ai,resources=rblndrivers/status,verbs=get;update;patch
@@ -102,7 +112,7 @@ func (r *RBLNDriverReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		r.nodeSelectorValidator = nodeSelectorValidator
 	}
 	if err := nodeSelectorValidator.Validate(ctx, instance); err != nil {
-		r.Log.Error(err, "nodeSelector validation failed")
+		r.Log.Info("WARNING: nodeSelector validation failed; skip reconcile", "name", req.Name, "error", err.Error())
 		r.setDriverStatusError(ctx, instance, err)
 		return ctrl.Result{}, nil
 	}
@@ -204,6 +214,43 @@ func (r *RBLNDriverReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&rebellionsaiv1alpha1.RBLNDriver{}).
 		Owns(&appsv1.DaemonSet{}).
 		Watches(&rblnv1beta1.RBLNClusterPolicy{}, handler.EnqueueRequestsFromMapFunc(mapFn)).
-		Watches(&corev1.Node{}, handler.EnqueueRequestsFromMapFunc(mapFn)).
+		Watches(
+			&corev1.Node{},
+			handler.EnqueueRequestsFromMapFunc(mapFn),
+			builder.WithPredicates(r.driverRelevantNodeLabelUpdated()),
+		).
 		Complete(r)
+}
+
+func (r *RBLNDriverReconciler) driverRelevantNodeLabelUpdated() predicate.Funcs {
+	interested := []string{
+		driverNodeDeployLabelKey,
+		nfdOSReleaseIDLabelKey,
+		nfdOSVersionIDLabelKey,
+		nfdKernelLabelKey,
+	}
+
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool { return true },
+		DeleteFunc: func(e event.DeleteEvent) bool { return true },
+		GenericFunc: func(e event.GenericEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldNode, ok1 := e.ObjectOld.(*corev1.Node)
+			newNode, ok2 := e.ObjectNew.(*corev1.Node)
+			if !ok1 || !ok2 {
+				return false
+			}
+
+			for _, key := range interested {
+				oldVal := oldNode.GetLabels()[key]
+				newVal := newNode.GetLabels()[key]
+				if oldVal != newVal {
+					return true
+				}
+			}
+			return false
+		},
+	}
 }

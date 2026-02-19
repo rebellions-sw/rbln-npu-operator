@@ -438,6 +438,7 @@ spec:
                 description: NodeSelector specifies a selector for installation of
                   the driver
                 type: object
+                x-kubernetes-map-type: atomic
               priorityClassName:
                 default: system-node-critical
                 description: PriorityClassName specifies the priority class for the

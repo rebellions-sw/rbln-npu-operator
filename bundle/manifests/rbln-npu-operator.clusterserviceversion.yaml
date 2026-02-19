@@ -14,33 +14,15 @@ metadata:
             "name": "rblndriver-sample"
           },
           "spec": {
-            "annotations": {
-              "example.rebellions.ai/driver": "true"
-            },
-            "env": [
-              {
-                "name": "RBLN_DRIVER_LOG_LEVEL",
-                "value": "info"
-              }
-            ],
-            "image": "playground/rbln-driver",
+            "image": "rebellions/rbln-driver",
             "imagePullPolicy": "Always",
-            "labels": {
-              "app.kubernetes.io/component": "driver"
-            },
             "manager": {
-              "env": [
-                {
-                  "name": "RBLN_MANAGER_LOG_LEVEL",
-                  "value": "info"
-                }
-              ],
               "image": "rebellions/rbln-k8s-driver-manager",
               "imagePullPolicy": "IfNotPresent",
               "registry": "docker.io",
               "version": "latest"
             },
-            "registry": "harbor.k8s.rebellions.in",
+            "registry": "repo.rebellions.ai",
             "resources": {
               "limits": {
                 "cpu": "500m",
@@ -51,7 +33,7 @@ metadata:
                 "memory": "64Mi"
               }
             },
-            "version": "3.0.0-rc3"
+            "version": "3.0.0"
           }
         },
         {
@@ -67,8 +49,8 @@ metadata:
             "containerToolkit": {
               "enabled": true,
               "image": "rebellions/rbln-container-toolkit",
-              "imagePullPolicy": "Always",
-              "registry": "harbor.k8s.rebellions.in",
+              "imagePullPolicy": "IfNotPresent",
+              "registry": "docker.io",
               "version": "latest"
             },
             "daemonsets": {},
@@ -77,7 +59,7 @@ metadata:
               "hostBinPath": "/run/rbln/driver/usr/bin",
               "image": "rebellions/k8s-device-plugin",
               "imagePullPolicy": "IfNotPresent",
-              "registry": "harbor.k8s.rebellions.in",
+              "registry": "docker.io",
               "resourceList": [
                 {
                   "productCardNames": [
@@ -88,14 +70,14 @@ metadata:
                   "resourcePrefix": "rebellions.ai"
                 }
               ],
-              "version": "driver-test"
+              "version": "latest"
             },
             "metricsExporter": {
               "enabled": true,
               "image": "rebellions/rbln-metrics-exporter",
               "imagePullPolicy": "IfNotPresent",
-              "registry": "harbor.k8s.rebellions.in",
-              "version": "power-test"
+              "registry": "docker.io",
+              "version": "latest"
             },
             "name": "rbln",
             "npuFeatureDiscovery": {
@@ -103,7 +85,15 @@ metadata:
               "image": "rebellions/rbln-npu-feature-discovery",
               "imagePullPolicy": "IfNotPresent",
               "registry": "docker.io",
-              "version": "v0.2.0"
+              "version": "latest"
+            },
+            "rblnDaemon": {
+              "enabled": true,
+              "hostPort": 50051,
+              "image": "rebellions/rbln-daemon",
+              "imagePullPolicy": "IfNotPresent",
+              "registry": "repo.rebellions.ai",
+              "version": "3.0.0"
             },
             "sandboxDevicePlugin": {
               "enabled": false,
@@ -120,7 +110,7 @@ metadata:
                   "resourcePrefix": "rebellions.ai"
                 }
               ],
-              "version": "v0.3.6",
+              "version": "latest",
               "vfioChecker": {
                 "image": "rebellions/rbln-vfio-manager",
                 "version": "latest"
@@ -128,9 +118,9 @@ metadata:
             },
             "validator": {
               "image": "rebellions/rbln-npu-operator-validator",
-              "imagePullPolicy": "Always",
-              "registry": "harbor.k8s.rebellions.in",
-              "version": "driver-test"
+              "imagePullPolicy": "IfNotPresent",
+              "registry": "docker.io",
+              "version": "latest"
             },
             "vfioManager": {
               "enabled": false,
@@ -145,7 +135,7 @@ metadata:
       ]
     capabilities: Basic Install
     containerImage: docker.io/rebellions/rbln-npu-operator:latest
-    createdAt: "2026-02-05T04:33:24Z"
+    createdAt: "2026-02-19T06:15:10Z"
     description: Deploy and manage Rebellions NPU in Kubernetes
     features.operators.openshift.io/cnf: "false"
     features.operators.openshift.io/cni: "false"

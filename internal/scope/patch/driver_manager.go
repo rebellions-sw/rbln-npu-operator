@@ -24,6 +24,7 @@ const (
 	driverManagerName                         = "rbln-driver"
 	driverManagerAppLabelKey                  = "app.kubernetes.io/component"
 	driverManagerNodePoolLabelKey             = "nodepool"
+	driverManagerInstanceLabelKey             = "rebellions.ai/driver-instance"
 	driverManagerDeployLabelKey               = "rebellions.ai/npu.deploy.driver"
 	driverManagerInitContainer                = "k8s-driver-manager"
 	driverManagerContainer                    = "rbln-driver-container"
@@ -35,12 +36,14 @@ const (
 	startupProbeScriptName                    = "startup-probe.sh"
 	startupProbeScriptPath                    = "/usr/local/bin/rbln-startup-probe.sh"
 	driverManagerStartupProbePeriodSeconds    = 10
-	driverManagerStartupProbeTimeoutSeconds   = 60
-	driverManagerStartupProbeFailureThreshold = 120
+	driverManagerStartupProbeTimeoutSeconds   = 120
+	driverManagerStartupProbeFailureThreshold = 60
 	hostDriverVolumeName                      = "host-driver"
 	hostDriverPath                            = "/run/rbln/driver"
 	hostRootVolumeName                        = "host-root"
 	hostRootPath                              = "/"
+	hostDevVolumeName                         = "host-dev"
+	hostDevPath                               = "/dev"
 )
 
 type mountPathToVolumeSource map[string]corev1.VolumeSource
@@ -59,6 +62,12 @@ var subscriptionPathMap = map[string]mountPathToVolumeSource{
 				Type: ptr(corev1.HostPathDirectory),
 			},
 		},
+		"/etc/yum.repos.d": corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/etc/yum.repos.d",
+				Type: ptr(corev1.HostPathDirectory),
+			},
+		},
 	},
 	"rhcos": {
 		"/var/run/secrets/etc-pki-entitlement": corev1.VolumeSource{
@@ -70,6 +79,12 @@ var subscriptionPathMap = map[string]mountPathToVolumeSource{
 		"/var/run/secrets/rhsm": corev1.VolumeSource{
 			HostPath: &corev1.HostPathVolumeSource{
 				Path: "/etc/rhsm",
+				Type: ptr(corev1.HostPathDirectory),
+			},
+		},
+		"/etc/yum.repos.d": corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/etc/yum.repos.d",
 				Type: ptr(corev1.HostPathDirectory),
 			},
 		},
@@ -90,6 +105,7 @@ type driverManagerPatcher struct {
 
 	desiredSpec      *rebellionsaiv1alpha1.RBLNDriverSpec
 	name             string
+	instanceName     string
 	namespace        string
 	openshiftVersion string
 }
@@ -113,6 +129,7 @@ func NewDriverManagerPatcher(client client.Client, log logr.Logger, namespace st
 		scheme:           scheme,
 		desiredSpec:      &driver.Spec,
 		name:             driverManagerName,
+		instanceName:     driver.Name,
 		namespace:        namespace,
 		openshiftVersion: openshiftVersion,
 	}, nil
@@ -127,14 +144,14 @@ func (h *driverManagerPatcher) Patch(ctx context.Context, owner *rebellionsaiv1a
 		return nil
 	}
 
-	if err := h.handleServiceAccount(ctx, owner); err != nil {
+	if err := h.handleServiceAccount(ctx); err != nil {
 		return err
 	}
 	if h.openshiftVersion != "" {
-		if err := h.handleRole(ctx, owner); err != nil {
+		if err := h.handleRole(ctx); err != nil {
 			return err
 		}
-		if err := h.handleRoleBinding(ctx, owner); err != nil {
+		if err := h.handleRoleBinding(ctx); err != nil {
 			return err
 		}
 	}
@@ -144,7 +161,7 @@ func (h *driverManagerPatcher) Patch(ctx context.Context, owner *rebellionsaiv1a
 	if err := h.handleClusterRoleBinding(ctx); err != nil {
 		return err
 	}
-	if err := h.handleConfigMap(ctx, owner); err != nil {
+	if err := h.handleConfigMap(ctx); err != nil {
 		return err
 	}
 
@@ -153,7 +170,8 @@ func (h *driverManagerPatcher) Patch(ctx context.Context, owner *rebellionsaiv1a
 		return err
 	}
 	if len(nodePools) == 0 {
-		return fmt.Errorf("no nodes matching the given selector for %s", h.name)
+		h.log.Info("WARNING: no nodes matching the given selector for driver manager; skipping daemonset reconcile", "instance", h.instanceName)
+		return nil
 	}
 	for _, nodePool := range nodePools {
 		if err := h.handleDaemonSet(ctx, owner, nodePool); err != nil {
@@ -164,11 +182,12 @@ func (h *driverManagerPatcher) Patch(ctx context.Context, owner *rebellionsaiv1a
 	return nil
 }
 
-func (h *driverManagerPatcher) CleanUp(ctx context.Context, _ *rebellionsaiv1alpha1.RBLNDriver) error {
+func (h *driverManagerPatcher) CleanUp(ctx context.Context, owner *rebellionsaiv1alpha1.RBLNDriver) error {
 	h.log.Info("WARNING: Driver Manager is disabled. Remove all Driver Manager resources")
 	dsList := &appsv1.DaemonSetList{}
 	if err := h.client.List(ctx, dsList, client.InNamespace(h.namespace), client.MatchingLabels(map[string]string{
-		driverManagerAppLabelKey: h.name,
+		driverManagerAppLabelKey:      h.name,
+		driverManagerInstanceLabelKey: h.instanceName,
 	})); err != nil && !kapierrors.IsNotFound(err) {
 		return err
 	}
@@ -176,6 +195,14 @@ func (h *driverManagerPatcher) CleanUp(ctx context.Context, _ *rebellionsaiv1alp
 		if err := h.client.Delete(ctx, &ds); err != nil && !kapierrors.IsNotFound(err) {
 			return err
 		}
+	}
+	otherInstancesExist, err := h.hasOtherDriverInstances(ctx, owner)
+	if err != nil {
+		return err
+	}
+	if otherInstancesExist {
+		h.log.Info("Skip deleting shared driver manager resources because other RBLNDriver instances exist", "instance", h.instanceName)
+		return nil
 	}
 	if err := h.client.Delete(ctx, &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
@@ -232,7 +259,8 @@ func (h *driverManagerPatcher) CleanUp(ctx context.Context, _ *rebellionsaiv1alp
 func (h *driverManagerPatcher) ConditionReport(ctx context.Context, _ *rebellionsaiv1alpha1.RBLNDriver) ([]metav1.Condition, error) {
 	dsList := &appsv1.DaemonSetList{}
 	if err := h.client.List(ctx, dsList, client.InNamespace(h.namespace), client.MatchingLabels(map[string]string{
-		driverManagerAppLabelKey: h.name,
+		driverManagerAppLabelKey:      h.name,
+		driverManagerInstanceLabelKey: h.instanceName,
 	})); err != nil {
 		return []metav1.Condition{{
 			Type:               DaemonSetReady,
@@ -247,7 +275,7 @@ func (h *driverManagerPatcher) ConditionReport(ctx context.Context, _ *rebellion
 			Type:               DaemonSetReady,
 			Status:             metav1.ConditionFalse,
 			Reason:             DaemonSetNotFound,
-			Message:            fmt.Sprintf("DaemonSet %s/%s could not be found", h.namespace, h.name),
+			Message:            fmt.Sprintf("DaemonSet for %s/%s could not be found", h.namespace, h.instanceName),
 			LastTransitionTime: metav1.Now(),
 		}}, nil
 	}
@@ -279,14 +307,14 @@ func (h *driverManagerPatcher) ConditionReport(ctx context.Context, _ *rebellion
 			Type:               DaemonSetReady,
 			Status:             metav1.ConditionTrue,
 			Reason:             DaemonSetAllPodsReady,
-			Message:            fmt.Sprintf("All pods in DaemonSets for %s are running", h.name),
+			Message:            fmt.Sprintf("All pods in DaemonSets for %s are running", h.instanceName),
 			LastTransitionTime: metav1.Now(),
 		},
 	}, nil
 }
 
 func (h *driverManagerPatcher) ComponentName() string {
-	return h.name
+	return h.instanceName
 }
 
 func (h *driverManagerPatcher) ComponentNamespace() string {
@@ -297,7 +325,7 @@ func (h *driverManagerPatcher) startupProbeConfigMapName() string {
 	return fmt.Sprintf("%s-%s", h.name, startupProbeConfigMapSuffix)
 }
 
-func (h *driverManagerPatcher) handleConfigMap(ctx context.Context, owner *rebellionsaiv1alpha1.RBLNDriver) error {
+func (h *driverManagerPatcher) handleConfigMap(ctx context.Context) error {
 	builder := k8sutil.NewConfigMapBuilder(h.startupProbeConfigMapName(), h.namespace)
 	cm := builder.Build()
 
@@ -334,7 +362,6 @@ mv "$TMP_FILE" "$READY_FILE"
 			WithData(map[string]string{
 				startupProbeScriptName: script,
 			}).
-			WithOwner(owner, h.scheme).
 			Build()
 		return nil
 	})
@@ -346,12 +373,12 @@ mv "$TMP_FILE" "$READY_FILE"
 	return nil
 }
 
-func (h *driverManagerPatcher) handleServiceAccount(ctx context.Context, owner *rebellionsaiv1alpha1.RBLNDriver) error {
+func (h *driverManagerPatcher) handleServiceAccount(ctx context.Context) error {
 	builder := k8sutil.NewServiceAccountBuilder(h.name, h.namespace)
 	sa := builder.Build()
 
 	saRes, err := controllerutil.CreateOrPatch(ctx, h.client, sa, func() error {
-		sa = builder.WithOwner(owner, h.scheme).Build()
+		sa = builder.Build()
 		return nil
 	})
 	if err != nil {
@@ -362,7 +389,7 @@ func (h *driverManagerPatcher) handleServiceAccount(ctx context.Context, owner *
 	return nil
 }
 
-func (h *driverManagerPatcher) handleRole(ctx context.Context, owner *rebellionsaiv1alpha1.RBLNDriver) error {
+func (h *driverManagerPatcher) handleRole(ctx context.Context) error {
 	builder := k8sutil.NewRoleBuilder(h.name, h.namespace)
 	role := builder.Build()
 
@@ -374,7 +401,6 @@ func (h *driverManagerPatcher) handleRole(ctx context.Context, owner *rebellions
 				ResourceNames: []string{"privileged"},
 				Verbs:         []string{"use"},
 			}).
-			WithOwner(owner, h.scheme).
 			Build()
 		return nil
 	})
@@ -386,7 +412,7 @@ func (h *driverManagerPatcher) handleRole(ctx context.Context, owner *rebellions
 	return nil
 }
 
-func (h *driverManagerPatcher) handleRoleBinding(ctx context.Context, owner *rebellionsaiv1alpha1.RBLNDriver) error {
+func (h *driverManagerPatcher) handleRoleBinding(ctx context.Context) error {
 	builder := k8sutil.NewRoleBindingBuilder(h.name, h.namespace)
 	binding := builder.Build()
 
@@ -402,7 +428,6 @@ func (h *driverManagerPatcher) handleRoleBinding(ctx context.Context, owner *reb
 				Name:      h.name,
 				Namespace: h.namespace,
 			}).
-			WithOwner(owner, h.scheme).
 			Build()
 		return nil
 	})
@@ -470,13 +495,14 @@ func (h *driverManagerPatcher) handleClusterRoleBinding(ctx context.Context) err
 }
 
 func (h *driverManagerPatcher) handleDaemonSet(ctx context.Context, owner *rebellionsaiv1alpha1.RBLNDriver, pool nodePool) error {
-	dsName := fmt.Sprintf("%s-%s", h.name, pool.name)
+	dsName := fmt.Sprintf("%s-%s", h.instanceName, pool.name)
 	builder := k8sutil.NewDaemonSetBuilder(dsName, h.namespace)
 	ds := builder.Build()
 
 	labels := map[string]string{
 		driverManagerAppLabelKey:      h.name,
 		driverManagerNodePoolLabelKey: pool.name,
+		driverManagerInstanceLabelKey: h.instanceName,
 	}
 	nodeSelector := k8sutil.MergeMaps(pool.nodeSelector, map[string]string{
 		driverManagerDeployLabelKey: "true",
@@ -501,6 +527,9 @@ func (h *driverManagerPatcher) handleDaemonSet(ctx context.Context, owner *rebel
 		}).
 		WithSecurityContext(&corev1.SecurityContext{
 			Privileged: ptr(true),
+			SELinuxOptions: &corev1.SELinuxOptions{
+				Level: "s0",
+			},
 		}).
 		WithVolumeMounts([]corev1.VolumeMount{
 			{
@@ -508,6 +537,11 @@ func (h *driverManagerPatcher) handleDaemonSet(ctx context.Context, owner *rebel
 				MountPath:        "/host",
 				ReadOnly:         true,
 				MountPropagation: ptr(corev1.MountPropagationHostToContainer),
+			},
+			{
+				Name:      hostDevVolumeName,
+				MountPath: "/dev",
+				ReadOnly:  true,
 			},
 		}).
 		Build()
@@ -533,6 +567,9 @@ func (h *driverManagerPatcher) handleDaemonSet(ctx context.Context, owner *rebel
 		WithSecurityContext(&corev1.SecurityContext{
 			Privileged: ptr(true),
 			RunAsUser:  ptr(int64(0)),
+			SELinuxOptions: &corev1.SELinuxOptions{
+				Level: "s0",
+			},
 		}).
 		WithVolumeMounts([]corev1.VolumeMount{
 			{
@@ -633,7 +670,10 @@ func (h *driverManagerPatcher) handleDaemonSet(ctx context.Context, owner *rebel
 			{
 				Name: validationsVolumeName,
 				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: validationsMountPath,
+						Type: ptr(corev1.HostPathDirectoryOrCreate),
+					},
 				},
 			},
 			{
@@ -641,6 +681,15 @@ func (h *driverManagerPatcher) handleDaemonSet(ctx context.Context, owner *rebel
 				VolumeSource: corev1.VolumeSource{
 					HostPath: &corev1.HostPathVolumeSource{
 						Path: hostRootPath,
+						Type: ptr(corev1.HostPathDirectory),
+					},
+				},
+			},
+			{
+				Name: hostDevVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: hostDevPath,
 						Type: ptr(corev1.HostPathDirectory),
 					},
 				},
@@ -688,4 +737,18 @@ func (h *driverManagerPatcher) handleDaemonSet(ctx context.Context, owner *rebel
 
 	h.log.Info("Reconciled Driver Manager DaemonSet", "namespace", ds.Namespace, "name", ds.Name, "result", dsRes)
 	return nil
+}
+
+func (h *driverManagerPatcher) hasOtherDriverInstances(ctx context.Context, owner *rebellionsaiv1alpha1.RBLNDriver) (bool, error) {
+	driverList := &rebellionsaiv1alpha1.RBLNDriverList{}
+	if err := h.client.List(ctx, driverList); err != nil {
+		return false, err
+	}
+	for _, driver := range driverList.Items {
+		if owner != nil && driver.Name == owner.Name {
+			continue
+		}
+		return true, nil
+	}
+	return false, nil
 }

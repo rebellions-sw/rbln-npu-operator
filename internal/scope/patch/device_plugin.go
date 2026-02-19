@@ -22,8 +22,6 @@ import (
 )
 
 const (
-	hostUsrBinVolumeName      = "host-usr-bin"
-	hostUsrBinPath            = "/usr/bin"
 	hostUsrBinMountPath       = "/host/usr/bin"
 	hostDriverUsrBinPath      = "/run/rbln/driver/usr/bin"
 	hostDriverUsrBinName      = "host-driver-usr-bin"
