@@ -74,6 +74,7 @@ type RBLNDriverSpec struct {
 
 	// NodeSelector specifies a selector for installation of the driver
 	// +kubebuilder:validation:Optional
+	// +mapType=atomic
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
 	// +kubebuilder:validation:Optional
@@ -210,7 +211,7 @@ func (d *RBLNDriverSpec) GetPrecompiledImagePath(osVersion string, kernelVersion
 func (d *RBLNDriver) GetNodeSelector() map[string]string {
 	if d == nil || len(d.Spec.NodeSelector) == 0 {
 		return map[string]string{
-			"rebellions.ai/npu.present": "true",
+			"rebellions.ai/npu.deploy.driver": "true",
 		}
 	}
 	return d.Spec.NodeSelector

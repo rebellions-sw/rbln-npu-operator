@@ -1,6 +1,8 @@
 package k8sutil
 
 import (
+	"slices"
+
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
@@ -15,6 +17,6 @@ func NewRoleBuilder(name, namespace string) *RoleBuilder {
 }
 
 func (b *RoleBuilder) WithRules(rules ...rbacv1.PolicyRule) *RoleBuilder {
-	b.obj.Rules = append(b.obj.Rules, rules...)
+	b.obj.Rules = slices.Clone(rules)
 	return b
 }

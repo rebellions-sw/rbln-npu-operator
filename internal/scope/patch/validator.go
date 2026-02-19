@@ -403,6 +403,11 @@ func (h *validatorPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1bet
 				MountPropagation: ptr(corev1.MountPropagationHostToContainer),
 			},
 			{
+				Name:      hostUsrBinVolumeName,
+				MountPath: "/host-usr-bin",
+				ReadOnly:  true,
+			},
+			{
 				Name:             validatorHostDriverVolumeName,
 				MountPath:        validatorHostDriverPath,
 				MountPropagation: ptr(corev1.MountPropagationHostToContainer),
@@ -516,6 +521,15 @@ func (h *validatorPatcher) handleDaemonSet(ctx context.Context, owner *rblnv1bet
 						VolumeSource: corev1.VolumeSource{
 							HostPath: &corev1.HostPathVolumeSource{
 								Path: validatorHostRootPath,
+								Type: ptr(corev1.HostPathDirectory),
+							},
+						},
+					},
+					{
+						Name: hostUsrBinVolumeName,
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: hostUsrBinPath,
 								Type: ptr(corev1.HostPathDirectory),
 							},
 						},

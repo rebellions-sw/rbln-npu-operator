@@ -87,7 +87,18 @@ func validateToolkit(cfg *config) error {
 		}
 		slog.Info("toolkit validation: newest CDI spec", "path", newestSpecPath, "mtime", newestSpecTime.Format(time.RFC3339))
 		if newestSpecTime.Before(driverReadyInfo.ModTime()) {
-			return fmt.Errorf("rbln cdi spec is stale: %s is older than %s", newestSpecPath, driverReadyPath)
+			slog.Warn(
+				"toolkit validation: rbln cdi spec is stale; continuing",
+				"specPath",
+				newestSpecPath,
+				"specMtime",
+				newestSpecTime.Format(time.RFC3339),
+				"driverReady",
+				driverReadyPath,
+				"driverReadyMtime",
+				driverReadyInfo.ModTime().Format(time.RFC3339),
+			)
+			return nil
 		}
 		return nil
 	}

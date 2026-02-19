@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	driverManagerAppLabelKey = "app"
+	driverManagerAppLabelKey = "app.kubernetes.io/component"
 	driverManagerName        = "rbln-driver"
 	rblnAPIGroupPrefix       = "rebellions.ai/"
 	rblnClusterPolicyKind    = "RBLNClusterPolicy"
@@ -25,7 +25,8 @@ const (
 	shell                    = "sh"
 	hostRootDefault          = "/"
 	hostRootMountPath        = "/host"
-	hostRblnSMIPath          = hostRootMountPath + "/usr/bin/rbln-smi"
+	hostUsrBinMountPath      = "/host-usr-bin"
+	hostRblnSMIPath          = hostUsrBinMountPath + "/rbln-smi"
 	hostDriverModuleName     = "rebellions"
 	driverInstallDirDefault  = "/run/rbln/driver"
 )

@@ -11,8 +11,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/rebellions-sw/rbln-npu-operator/internal/consts"
 )
 
 const (
@@ -64,7 +62,7 @@ func getNodePools(ctx context.Context, k8sClient client.Client, selector map[str
 
 func buildNodeSelector(selector map[string]string) map[string]string {
 	nodeSelector := map[string]string{
-		consts.RBLNPresentLabelKey: "true",
+		driverManagerDeployLabelKey: "true",
 	}
 	maps.Copy(nodeSelector, selector)
 	return nodeSelector

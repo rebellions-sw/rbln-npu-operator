@@ -84,7 +84,7 @@ driver:
     registry: repo.rebellions.ai
     repository: rebellions/rbln-driver
     tag: 3.0.0
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   # Example:
   # imagePullSecrets:
   # - my-registry-secret
@@ -142,7 +142,7 @@ driver:
   manager:
     registry: docker.io
     image: rebellions/rbln-k8s-driver-manager
-    version: v0.1.0
+    version: v0.1.1
     imagePullPolicy: IfNotPresent
   #  imagePullSecrets:
   #  - my-registry-secret

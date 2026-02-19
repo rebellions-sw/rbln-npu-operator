@@ -1,6 +1,8 @@
 package k8sutil
 
 import (
+	"slices"
+
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
@@ -20,6 +22,6 @@ func (b *RoleBindingBuilder) WithRoleRef(roleRef rbacv1.RoleRef) *RoleBindingBui
 }
 
 func (b *RoleBindingBuilder) WithSubjects(subjects ...rbacv1.Subject) *RoleBindingBuilder {
-	b.obj.Subjects = append(b.obj.Subjects, subjects...)
+	b.obj.Subjects = slices.Clone(subjects)
 	return b
 }
